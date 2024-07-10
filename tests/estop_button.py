@@ -1,6 +1,9 @@
 import RPi.GPIO as GPIO
 import time
 
+# Set the pin numbering mode
+GPIO.setmode(GPIO.BCM)  # or GPIO.BOARD
+
 # Define GPIO pin to listen to
 pin = 4
 
