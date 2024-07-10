@@ -1,0 +1,16 @@
+
+PI GPIO - External Component
+-----------------------------
+SDA - MCP23017 Chip SDA
+SCL - MCP23017 Chip SCL
+#4 - E-Stop Button   (Switch so that Ground goes to #4 and Pos goes to 3.3v)
+#21 - 
+#20 - 
+#16 - (FIx this so it goes to #16 and not #20)
+#25 - Right side Initial Limit Switch
+#24 - Right side Secondary Limit Switch
+#23 - Left side Secondary Limit Switch
+#18 - Left side Initial Limit Switch
+
+
+
