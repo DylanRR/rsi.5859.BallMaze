@@ -21,6 +21,9 @@ try:
     # Keep the script running to listen for events
     print("Listening for GPIO events. Press Ctrl+C to exit.")
     while True:
+         # Print the current state of the pin for debugging
+        pin_state = GPIO.input(pin)
+        print(f"GPIO pin {pin} state: {pin_state}")
         time.sleep(1)
 except KeyboardInterrupt:
     print("Exiting...")
