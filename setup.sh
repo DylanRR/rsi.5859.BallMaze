@@ -6,30 +6,40 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Navigate to the project directory
 cd "$SCRIPT_DIR"
 
-# Ask the user whether to perform a pull or a hard reset
-echo "Do you want to perform a 'pull' or a 'hard reset'? (Enter 'pull' or 'reset')"
-read -r -p "Choice: " choice
+while true; do
+    # Ask the user whether to perform a pull or a hard reset
+    echo "Do you want to perform a 'pull' or a 'hard reset'? (Enter 'pull' or 'reset')"
+    read -r -p "Choice: " choice
 
-if [ "$choice" == "pull" ]; then
-    echo "Pulling the latest changes from the repository..."
-    if git pull origin main; then
-        echo "Successfully pulled the latest changes."
+    if [ "$choice" == "pull" ]; then
+        echo "Pulling the latest changes from the repository..."
+        if git pull origin main; then
+            echo "Successfully pulled the latest changes."
+            break
+        else
+            echo "Failed to pull the latest changes."
+            exit 1
+        fi
+    elif [ "$choice" == "reset" ]; then
+        echo "Warning: Performing a hard reset will cause this script to lose its executable permission."
+        read -r -p "Do you want to continue? (yes/no): " confirm
+        if [ "$confirm" == "yes" ]; then
+            echo "Resetting local branch to match the remote branch..."
+            if git reset --hard origin/main; then
+                echo "Successfully reset the local branch."
+                echo "You will need to run 'chmod +x setup.sh' to make this script executable again."
+                break
+            else
+                echo "Failed to reset the local branch."
+                exit 1
+            fi
+        else
+            echo "Returning to the choice between 'pull' and 'reset'."
+        fi
     else
-        echo "Failed to pull the latest changes."
-        exit 1
+        echo "Invalid choice. Please enter 'pull' or 'reset'."
     fi
-elif [ "$choice" == "reset" ]; then
-    echo "Resetting local branch to match the remote branch..."
-    if git reset --hard origin/main; then
-        echo "Successfully reset the local branch."
-    else
-        echo "Failed to reset the local branch."
-        exit 1
-    fi
-else
-    echo "Invalid choice. Exiting."
-    exit 1
-fi
+done
 
 # Create a virtual environment if it doesn't exist
 if [ ! -d "venv" ]; then
