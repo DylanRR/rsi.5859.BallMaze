@@ -26,3 +26,7 @@ fi
 
 # Indicate that the setup was completed successfully
 echo "Setup completed successfully."
+
+# Pause and wait for the user to press Enter to close the terminal
+echo "Press Enter to close this window..."
+read
