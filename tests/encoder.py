@@ -52,7 +52,7 @@ try:
 	print("Rotary encoder test. Press Ctrl+C to exit.")
 	while True:
 		update_counter()
-		time.sleep(0.01)  # Adjust the sleep time as needed
+		time.sleep(0.001)  # Reduce the sleep time to detect slow turns
 except KeyboardInterrupt:
 	print("Exiting...")
 
