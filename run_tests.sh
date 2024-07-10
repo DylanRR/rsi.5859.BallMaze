@@ -34,5 +34,14 @@ selected_file="${test_files[$((file_number-1))]}"
 echo "Running $selected_file..."
 python "$selected_file"
 
+
+# Pause and wait for the user to press Enter to close the terminal
+while true; do
+    read -r -p "Press Enter to close this test..." input
+    if [ -z "$input" ]; then
+        break
+    fi
+done
+
 # Deactivate the virtual environment
 deactivate
