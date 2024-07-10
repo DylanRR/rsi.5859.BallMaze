@@ -29,4 +29,9 @@ echo "Setup completed successfully."
 
 # Pause and wait for the user to press Enter to close the terminal
 echo "Press Enter to close this window..."
-read
+while true; do
+    read -r -p "Press Enter to close this window..." input
+    if [ -z "$input" ]; then
+        break
+    fi
+done
