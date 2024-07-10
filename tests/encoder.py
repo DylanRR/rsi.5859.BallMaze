@@ -38,6 +38,8 @@ def update_counter(channel):
 	a = encoderA.value
 	b = encoderB.value
 
+	print(f"Interrupt detected. Encoder A: {a}, Encoder B: {b}")
+
 	if a != last_a or b != last_b:
 		if a == b:
 			counter += 1
