@@ -29,10 +29,10 @@ while true; do
         continue
     fi
 
-    # Run the selected file
+    # Run the selected file with sudo
     selected_file="${test_files[$((file_number-1))]}"
-    echo "Running $selected_file..."
-    python "$selected_file"
+    echo "Running $selected_file with sudo..."
+    sudo python "$selected_file"
 
     # Prompt the user to either run another test or exit
     while true; do
