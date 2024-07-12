@@ -3,4 +3,3 @@ gpiozero
 adafruit-circuitpython-mcp230xx
 adafruit-circuitpython-busdevice
 adafruit-python-shell
-//adafruit-blinka
