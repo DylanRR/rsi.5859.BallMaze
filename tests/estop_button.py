@@ -1,32 +1,19 @@
-import RPi.GPIO as GPIO
-import time
-
-# Set the pin numbering mode
-GPIO.setmode(GPIO.BCM)  # or GPIO.BOARD
+from gpiozero import Button
+from signal import pause
 
 # Define GPIO pin to listen to
 pin = 4
 
-# Set up the pin as an input with a pull-up resistor
-GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+# Set up the pin as a Button, assuming the button is Normally Closed (NC)
+# and inverts the logic by setting pull_up=False
+button = Button(pin, pull_up=True, bounce_time=0.2)
 
-# Define a callback function to handle GPIO events
-def gpio_callback(channel):
-    print("E-Stop button triggered")
+# Define a callback function to handle button press
+def on_press():
+	print("E-Stop button pressed")
 
-# Add event detection for the pin
-GPIO.add_event_detect(pin, GPIO.FALLING, callback=gpio_callback, bouncetime=200)
+# Attach the callback function to the button press event
+button.when_deactivated = on_press
 
-try:
-    # Keep the script running to listen for events
-    print("Listening for GPIO events. Press Ctrl+C to exit.")
-    while True:
-         # Print the current state of the pin for debugging
-        pin_state = GPIO.input(pin)
-        print(f"GPIO pin {pin} state: {pin_state}")
-        time.sleep(1)
-except KeyboardInterrupt:
-    print("Exiting...")
-
-# Clean up GPIO settings before exiting
-GPIO.cleanup()
+print("Listening for button press. Press Ctrl+C to exit.")
+pause()  # Keep the program running
