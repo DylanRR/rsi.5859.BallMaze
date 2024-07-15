@@ -25,56 +25,78 @@ encoderZ = mcp.get_pin(10)  # GPB2
 encoderZ.direction = Direction.INPUT
 encoderZ.pull = digitalio.Pull.UP
 
+###########SETUP INTERRUPT FOR ENCODER################
+
 # Enable interrupts for GPB0, GPB1, and GPB2
 # mcp.interrupt_enable = 0x07  # 0b00000111
 mcp.interrupt_enable = 0xFFFF
 mcp.interrupt_configuration = 0x0000  # interrupt on any change
 mcp.io_control = 0x44  # Interrupt as open drain and mirrored
 mcp.clear_ints()  # Interrupts need to be cleared initially
-
 # Configure interrupts to trigger on a change
 mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
-
 # Setup interrupt handling for INTB connected to GPIO #12 using gpiozero
 intb_button = Button(12, pull_up=True)
 
-# Global variables for encoder count and limits
-count = 0
 
-# Previous states of encoderA and encoderB to determine direction of rotation
-last_encoderA_state = None
-last_encoderB_state = None
+
 
 def handle_interrupt():
-  global count, last_encoderA_state, last_encoderB_state
+  global count, last_encoderA_state, last_encoderB_state, direction, flipDirection, direction_cw_count, direction_ccw_count
   current_encoderA = encoderA.value
   current_encoderB = encoderB.value
 
-	# Handle initial inturupt
   if last_encoderA_state is None or last_encoderB_state is None:
     last_encoderA_state = current_encoderA
     last_encoderB_state = current_encoderB
     return
 
   if last_encoderA_state != current_encoderA or last_encoderB_state != current_encoderB:
-    # Determine direction based on A and B states
-    if last_encoderA_state == 0 and current_encoderA == 1:
-      if current_encoderB == 0:
-          count += 1
+    def update_direction(is_cw):
+      if flipDirection is None:
+        direction = is_cw
+      elif flipDirection == is_cw:
+        direction_cw_count += is_cw
+        direction_ccw_count += not is_cw
       else:
-          count -= 1
-    elif last_encoderA_state == 1 and current_encoderA == 0:
-      if current_encoderB == 1:
-          count += 1
-      else:
-          count -= 1
+        direction_cw_count = is_cw
+        direction_ccw_count = not is_cw
+      flipDirection = is_cw
 
-  # Update last states for next interrupt
+      if last_encoderA_state == 0 and current_encoderA == 1:
+            update_direction(current_encoderB == 0)
+      elif last_encoderA_state == 1 and current_encoderA == 0:
+            update_direction(current_encoderB == 1)
+
+      if direction_cw_count >= directionDelta:
+        direction = True
+        flipDirection = True
+        direction_cw_count = 0
+        direction_ccw_count = 0
+        
+      if direction_ccw_count >= directionDelta:
+        direction = False
+        flipDirection = False
+        direction_cw_count = 0
+        direction_ccw_count = 0
+
   last_encoderA_state = current_encoderA
   last_encoderB_state = current_encoderB
-  
-  # Print the current count
+
   print(f"Current count: {count}")
+
+# Global variables for encoder count and limits
+count = 0
+# Previous states of encoderA and encoderB to determine direction of rotation
+last_encoderA_state = None
+last_encoderB_state = None
+direction = None   # True for CW, False for CCW
+flipDirection = None
+direction_cw_count = 0
+direction_ccw_count = 0
+directionDelta = 2
+
+
 
 intb_button.when_pressed = handle_interrupt
 
