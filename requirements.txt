@@ -2,5 +2,7 @@ RPi.GPIO
 gpiozero
 adafruit-circuitpython-mcp230xx
 adafruit-circuitpython-busdevice
+adafruit-circuitpython-blinka
 adafruit-python-shell
 lgpio
+
