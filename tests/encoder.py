@@ -39,53 +39,6 @@ mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 intb_button = Button(12, pull_up=True)
 
 
-
-
-def handle_interrupt():
-  global count, last_encoderA_state, last_encoderB_state, direction, flipDirection, direction_cw_count, direction_ccw_count
-  current_encoderA = encoderA.value
-  current_encoderB = encoderB.value
-
-  if last_encoderA_state is None or last_encoderB_state is None:
-    last_encoderA_state = current_encoderA
-    last_encoderB_state = current_encoderB
-    return
-
-  if last_encoderA_state != current_encoderA or last_encoderB_state != current_encoderB:
-    def update_direction(is_cw):
-      if flipDirection is None:
-        flipDirection = is_cw
-      elif flipDirection == is_cw:
-        direction_cw_count += is_cw
-        direction_ccw_count += not is_cw
-      else:
-        direction_cw_count = is_cw
-        direction_ccw_count = not is_cw
-      flipDirection = is_cw
-
-      if last_encoderA_state == 0 and current_encoderA == 1:
-            update_direction(current_encoderB == 0)
-      elif last_encoderA_state == 1 and current_encoderA == 0:
-            update_direction(current_encoderB == 1)
-
-      if direction_cw_count >= directionDelta:
-        direction = True
-        flipDirection = True
-        direction_cw_count = 0
-        direction_ccw_count = 0
-        print("CW")
-        
-      if direction_ccw_count >= directionDelta:
-        direction = False
-        flipDirection = False
-        direction_cw_count = 0
-        direction_ccw_count = 0
-        print("CCW")
-
-  last_encoderA_state = current_encoderA
-  last_encoderB_state = current_encoderB
-
-
 # Global variables for encoder count and limits
 count = 0
 # Previous states of encoderA and encoderB to determine direction of rotation
@@ -93,10 +46,70 @@ last_encoderA_state = None
 last_encoderB_state = None
 direction = None   # True for CW, False for CCW
 flipDirection = None
-direction_cw_count = 0
-direction_ccw_count = 0
+directionCount = 0
 directionDelta = 2
+prev_encoderA_val = 0
+prev_encoderB_val = 0
 
+def handle_interrupt():
+  global direction, flipDirection, directionCount
+  isCW = getEncoderDirection()
+  if flipDirection == None:
+    flipDirection = isCW
+    return
+  
+  if flipDirection == isCW:
+    directionCount += 1
+  else:
+    directionCount = 0
+    flipDirection = isCW
+
+  if directionCount >= directionDelta:
+    direction = flipDirection
+    directionCount = 0
+    printDirection()
+
+
+
+def getEncoderDirection():
+  global prev_encoderA_val, prev_encoderB_val
+  current_encoderA = encoderA.value
+  current_encoderB = encoderB.value
+  # Initialize isCW to None; it will be updated based on the direction
+  isCW = None
+  # Determine the direction based on the change of state
+  if prev_encoderA_val == 0 and prev_encoderB_val == 0:
+    if current_encoderA == 1 and current_encoderB == 0:
+      isCW = True
+    elif current_encoderA == 0 and current_encoderB == 1:
+      isCW = False
+  elif prev_encoderA_val == 1 and prev_encoderB_val == 0:
+    if current_encoderA == 1 and current_encoderB == 1:
+      isCW = True
+    elif current_encoderA == 0 and current_encoderB == 0:
+      isCW = False
+  elif prev_encoderA_val == 1 and prev_encoderB_val == 1:
+    if current_encoderA == 0 and current_encoderB == 1:
+      isCW = True
+    elif current_encoderA == 1 and current_encoderB == 0:
+      isCW = False
+  elif prev_encoderA_val == 0 and prev_encoderB_val == 1:
+    if current_encoderA == 0 and current_encoderB == 0:
+      isCW = True
+    elif current_encoderA == 1 and current_encoderB == 1:
+      isCW = False
+
+
+  prev_encoderA_val = current_encoderA
+  prev_encoderB_val = current_encoderB
+  return isCW
+
+def printDirection():
+  global direction
+  if direction:
+    print("CW")
+  else:
+    print("CCW")
 
 
 intb_button.when_pressed = handle_interrupt
