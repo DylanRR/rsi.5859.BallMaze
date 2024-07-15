@@ -1,9 +1,9 @@
+from gpiozero import Button
+from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
 import busio
 from digitalio import Direction, Pull
-from adafruit_mcp230xx.mcp23017 import MCP23017
-import time
-import RPi.GPIO as GPIO
+import digitalio
 
 # Initialize I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -11,66 +11,72 @@ i2c = busio.I2C(board.SCL, board.SDA)
 # Initialize MCP23017
 mcp = MCP23017(i2c, address=0x20)
 
+
 # Setup MCP23017 pins for the encoder
-encoderA = mcp.get_pin(8)
+encoderA = mcp.get_pin(8)  # GPB0
 encoderA.direction = Direction.INPUT
-encoderA.pull = Pull.UP
+encoderA.pull = digitalio.Pull.UP
 
-encoderB = mcp.get_pin(9)
+encoderB = mcp.get_pin(9)  # GPB1
 encoderB.direction = Direction.INPUT
-encoderB.pull = Pull.UP
+encoderB.pull = digitalio.Pull.UP
 
-# Configure MCP23017 to generate interrupts on pin state changes
-mcp.interrupt_enable = 0x03  # Enable interrupts on pins 8 and 9
-mcp.interrupt_configuration = 0x03  # Interrupt on any change from previous state
-mcp.default_value = 0x00  # Default value for comparison
-mcp.interrupt_control = 0x03  # Compare against previous value
+encoderZ = mcp.get_pin(10)  # GPB2
+encoderZ.direction = Direction.INPUT
+encoderZ.pull = digitalio.Pull.UP
 
-# Initialize variables
-last_a = encoderA.value
-last_b = encoderB.value
-counter = 0
-min_counter = 0
-max_counter = 1000
+# Enable interrupts for GPB0, GPB1, and GPB2
+# mcp.interrupt_enable = 0x07  # 0b00000111
+mcp.interrupt_enable = 0xFFFF
+mcp.interrupt_configuration = 0x0000  # interrupt on any change
+mcp.io_control = 0x44  # Interrupt as open drain and mirrored
+mcp.clear_ints()  # Interrupts need to be cleared initially
 
-def update_counter(channel):
-	global last_a, last_b, counter
-	a = encoderA.value
-	b = encoderB.value
+# Configure interrupts to trigger on a change
+mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
-	print(f"Interrupt detected. Encoder A: {a}, Encoder B: {b}")
+# Setup interrupt handling for INTB connected to GPIO #12 using gpiozero
+intb_button = Button(12, pull_up=True)
 
-	if a != last_a or b != last_b:
-		if a == b:
-			counter += 1
-		else:
-			counter -= 1
+# Global variables for encoder count and limits
+count = 0
 
-		# Ensure counter stays within bounds
-		if counter < min_counter:
-			counter = min_counter
-		elif counter > max_counter:
-			counter = max_counter
+# Previous states of encoderA and encoderB to determine direction of rotation
+last_encoderA_state = None
+last_encoderB_state = None
 
-		print(f"Counter value: {counter}")
+def handle_interrupt():
+  global count, last_encoderA_state, last_encoderB_state
+  current_encoderA = encoderA.value
+  current_encoderB = encoderB.value
 
-	last_a = a
-	last_b = b
+	# Handle initial inturupt
+  if last_encoderA_state is None or last_encoderB_state is None:
+    last_encoderA_state = current_encoderA
+    last_encoderB_state = current_encoderB
+    return
 
-# Setup Raspberry Pi GPIO pin for MCP23017 interrupt
-interrupt_pin = 17  # GPIO pin connected to MCP23017 INT pin
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+  if last_encoderA_state != current_encoderA or last_encoderB_state != current_encoderB:
+    # Determine direction based on A and B states
+    if last_encoderA_state == 0 and current_encoderA == 1:
+      if current_encoderB == 0:
+          count += 1
+      else:
+          count -= 1
+    elif last_encoderA_state == 1 and current_encoderA == 0:
+      if current_encoderB == 1:
+          count += 1
+      else:
+          count -= 1
 
-# Attach interrupt handler to the GPIO pin
-GPIO.add_event_detect(interrupt_pin, GPIO.FALLING, callback=update_counter, bouncetime=10)
+  # Update last states for next interrupt
+  last_encoderA_state = current_encoderA
+  last_encoderB_state = current_encoderB
+  
+  # Print the current count
+  print(f"Current count: {count}")
 
-try:
-	print("Rotary encoder test with interrupts. Press Ctrl+C to exit.")
-	while True:
-		time.sleep(1)  # Keep the script running
-except KeyboardInterrupt:
-	print("Exiting...")
+intb_button.when_pressed = handle_interrupt
 
-# Clean up GPIO settings before exiting
-GPIO.cleanup()
+# Keep the script running
+input("Press enter to quit\n\n")
