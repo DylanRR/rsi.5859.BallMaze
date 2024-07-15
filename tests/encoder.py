@@ -54,7 +54,7 @@ def handle_interrupt():
   if last_encoderA_state != current_encoderA or last_encoderB_state != current_encoderB:
     def update_direction(is_cw):
       if flipDirection is None:
-        direction = is_cw
+        flipDirection = is_cw
       elif flipDirection == is_cw:
         direction_cw_count += is_cw
         direction_ccw_count += not is_cw
@@ -73,17 +73,18 @@ def handle_interrupt():
         flipDirection = True
         direction_cw_count = 0
         direction_ccw_count = 0
+        print("CW")
         
       if direction_ccw_count >= directionDelta:
         direction = False
         flipDirection = False
         direction_cw_count = 0
         direction_ccw_count = 0
+        print("CCW")
 
   last_encoderA_state = current_encoderA
   last_encoderB_state = current_encoderB
 
-  print(f"Current count: {count}")
 
 # Global variables for encoder count and limits
 count = 0
