@@ -1,8 +1,8 @@
-RPi.GPIO
 gpiozero
+lgpio
 adafruit-circuitpython-mcp230xx
 adafruit-circuitpython-busdevice
 adafruit-blinka
 adafruit-python-shell
-lgpio
+RpiMotorLib
 
