@@ -15,5 +15,5 @@ def on_press():
 # Attach the callback function to the button press event
 button.when_deactivated = on_press
 
-print("Listening for button press. Press Ctrl+C to exit.")
-pause()  # Keep the program running
+# Keep the script running
+input("Press enter to quit\n\n")

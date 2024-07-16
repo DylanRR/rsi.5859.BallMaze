@@ -21,11 +21,5 @@ def button_pressed(button):
 for button in buttons.values():
 	button.when_pressed = button_pressed
 
-print("Listening for GPIO events. Press Ctrl+C to exit.")
-
-try:
-	# Keep the script running to listen for events
-	while True:
-		time.sleep(1)
-except KeyboardInterrupt:
-	print("Exiting...")
+# Keep the script running
+input("Listening for GPIO events. Press enter to quit\n\n")
