@@ -14,11 +14,13 @@ RIGHT_SECONDARY_LIMIT_SWITCH = 24
 RIGHT_INITIAL_LIMIT_SWITCH = 25
 
 # Initialize GPIO devices
-"""
+
 llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
-"""
+lls = Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True)
+rls = Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True)
+
 mDirection = OutputDevice(DIRECTION_PIN)
 mStep = OutputDevice(STEP_PIN)
 mEnable = OutputDevice(ENABLE_PIN, initial_value=True)  # Motor disabled initially
@@ -50,15 +52,6 @@ def left_ls_halt():
 def right_ls_halt():
   halt("Right Halt Limit Switch triggered")
 
-def setup_eStopInterrupts():
-	llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
-	rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
-	btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
-
-	llsHalt.when_pressed = left_ls_halt
-	rlsHalt.when_pressed = right_ls_halt
-	btnHalt.when_deactivated = e_stop_halt
-	print("E-Stop setup complete")
 	
 motorPause = True
 motorDelay = None
@@ -75,10 +68,12 @@ trackEndCalibrated = False
 def right_ls():
 	global trackHomeCalibrated, trackHome, trackPosition
 	if not trackHomeCalibrated:
+		trackPosition = 0
 		move_motor(steps=20, clockwise=False)
 		trackHome = 0
-		trackPosition = 0
 		trackHomeCalibrated = True
+	print(f"Setting track position to adjusted home:{trackHome}")
+	trackPosition = trackHome
 
 def left_ls():
 	global trackEndCalibrated, trackEnd, trackPosition
@@ -88,29 +83,25 @@ def left_ls():
 		trackEndCalibrated = True
 		
 
-
-def setup_LSInterrupts():
-	Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = left_ls
-	Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = right_ls
-	print("Limit Switch setup complete")
-
 def calibrateTrack():
 	print("Calibrating Track...")
-	global trackHomeCalibrated, trackEndCalibrated, trackPosition
+	global trackHomeCalibrated, trackEndCalibrated, trackPosition, trackSteps
 	toggle_motor(True) # May need to change to False
-	set_motor_direction(False)
+	set_motor_direction(True)
 	while not trackHomeCalibrated:
 		mStep.on()
-		time.sleep(0.01)
+		time.sleep(0.001)
 		mStep.off()
-		time.sleep(0.01)
-	set_motor_direction(True) # May need to change to False
+		time.sleep(0.001)
+	set_motor_direction(False) # May need to change to False
+	toggle_motor(True)
 	while not trackEndCalibrated:
 		mStep.on()
-		time.sleep(0.01)
+		time.sleep(0.001)
 		mStep.off()
-		time.sleep(0.01)
+		time.sleep(0.001)
 		trackPosition += 1
+	
 	trackSteps = trackEnd - trackHome
 	toggle_motor(False)
 	print(f"Track Calibrated: Home: {trackHome}, End: {trackEnd}, Steps: {trackSteps}")
@@ -118,27 +109,33 @@ def calibrateTrack():
 
 # Move Motor
 def move_motor(steps, clockwise, delay=0.01):
+	global trackPosition
+	toggle_motor(True)
 	set_motor_direction(clockwise)
 	for step in range(steps):
 		mStep.on()
 		time.sleep(delay)
 		mStep.off()
 		time.sleep(delay)
+		if clockwise:
+			trackPosition -= 1
+		else:
+			trackPosition += 1
+		print(f"\rCurrent Position: {trackPosition}", end='', flush=True)
+	print()
+	toggle_motor(False)
 
 
-  
-
+llsHalt.when_pressed = left_ls_halt
+rlsHalt.when_pressed = right_ls_halt
+btnHalt.when_deactivated = e_stop_halt
+lls.when_pressed = left_ls
+rls.when_pressed = right_ls
 def main():
-	
-	#llsHalt.when_pressed = left_ls_halt
-	#rlsHalt.when_pressed = right_ls_halt
-	#btnHalt.when_deactivated = e_stop_halt
-	#setup_gpio()
-	setup_eStopInterrupts()
-	setup_LSInterrupts()
 	try:
 		print("Starting...")
 		calibrateTrack()
+		move_motor(steps=round(trackSteps/2), clockwise=True, delay=0.001)
 	finally:
 		toggle_motor(False)
 
