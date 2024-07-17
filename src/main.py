@@ -1,6 +1,4 @@
-import RPi.GPIO as GPIO
-from gpiozero import Button
-from RpiMotorLib import RpiMotorLib
+from gpiozero import Button, OutputDevice
 import time
 import os
 
@@ -15,35 +13,25 @@ LEFT_SECONDARY_LIMIT_SWITCH = 23
 RIGHT_SECONDARY_LIMIT_SWITCH = 24
 RIGHT_INITIAL_LIMIT_SWITCH = 25
 
+# Initialize GPIO devices
+"""
 llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
-
-
-
-# Define other motor parameters
-motor_type = 'A4988'
-motor_mode = [-1,-1,-1]
-motor_pins = (DIRECTION_PIN, STEP_PIN)
-motor = RpiMotorLib.A4988Nema(DIRECTION_PIN, STEP_PIN, motor_mode, motor_type)
-
-# Initialize GPIO
-def setup_gpio():
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setup(DIRECTION_PIN, GPIO.OUT)
-	GPIO.setup(STEP_PIN, GPIO.OUT)
-	GPIO.setup(ENABLE_PIN, GPIO.OUT)
-	print("GPIO setup complete")
-
-# Cleanup GPIO
-def cleanup_gpio():
-	GPIO.cleanup()
-	print("GPIO cleanup complete")
+"""
+mDirection = OutputDevice(DIRECTION_PIN)
+mStep = OutputDevice(STEP_PIN)
+mEnable = OutputDevice(ENABLE_PIN, initial_value=True)  # Motor disabled initially
 
 # Toggle motor function
 def toggle_motor(enabled):
-	GPIO.output(ENABLE_PIN, GPIO.LOW if enabled else GPIO.HIGH)
-	print("Motor enabled" if enabled else "Motor disabled")
+    mEnable.value = not enabled  # False to enable, True to disable
+    print("Motor enabled" if enabled else "Motor disabled")
+		
+def set_motor_direction(clockwise):
+  mDirection.value = clockwise
+  print(f"Motor direction set to {'clockwise' if clockwise else 'counter-clockwise'}")
+
 
 # Generic Halt function
 def halt(message):
@@ -63,6 +51,10 @@ def right_ls_halt():
   halt("Right Halt Limit Switch triggered")
 
 def setup_eStopInterrupts():
+	llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
+	rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
+	btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
+
 	llsHalt.when_pressed = left_ls_halt
 	rlsHalt.when_pressed = right_ls_halt
 	btnHalt.when_deactivated = e_stop_halt
@@ -101,24 +93,22 @@ def setup_LSInterrupts():
 	Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = left_ls
 	Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = right_ls
 	print("Limit Switch setup complete")
-	
-
 
 def calibrateTrack():
 	print("Calibrating Track...")
 	global trackHomeCalibrated, trackEndCalibrated, trackPosition
-	toggle_motor(True)
-	GPIO.output(DIRECTION_PIN, GPIO.HIGH)
+	toggle_motor(True) # May need to change to False
+	set_motor_direction(False)
 	while not trackHomeCalibrated:
-		GPIO.output(STEP_PIN, GPIO.LOW)
+		mStep.on()
 		time.sleep(0.01)
-		GPIO.output(STEP_PIN, GPIO.HIGH)
+		mStep.off()
 		time.sleep(0.01)
-	GPIO.output(DIRECTION_PIN, GPIO.Low)
+	set_motor_direction(True) # May need to change to False
 	while not trackEndCalibrated:
-		GPIO.output(STEP_PIN, GPIO.LOW)
+		mStep.on()
 		time.sleep(0.01)
-		GPIO.output(STEP_PIN, GPIO.HIGH)
+		mStep.off()
 		time.sleep(0.01)
 		trackPosition += 1
 	trackSteps = trackEnd - trackHome
@@ -128,29 +118,29 @@ def calibrateTrack():
 
 # Move Motor
 def move_motor(steps, clockwise, delay=0.01):
-	GPIO.output(DIRECTION_PIN, GPIO.HIGH if clockwise else GPIO.LOW)
+	set_motor_direction(clockwise)
 	for step in range(steps):
-		GPIO.output(STEP_PIN, GPIO.LOW)
+		mStep.on()
 		time.sleep(delay)
-		GPIO.output(STEP_PIN, GPIO.HIGH)
+		mStep.off()
 		time.sleep(delay)
 
 
   
 
 def main():
-	llsHalt.when_pressed = left_ls_halt
-	rlsHalt.when_pressed = right_ls_halt
-	btnHalt.when_deactivated = e_stop_halt
-	setup_gpio()
-	#setup_eStopInterrupts()
+	
+	#llsHalt.when_pressed = left_ls_halt
+	#rlsHalt.when_pressed = right_ls_halt
+	#btnHalt.when_deactivated = e_stop_halt
+	#setup_gpio()
+	setup_eStopInterrupts()
 	setup_LSInterrupts()
 	try:
 		print("Starting...")
 		calibrateTrack()
 	finally:
 		toggle_motor(False)
-		cleanup_gpio()
 
 if __name__ == "__main__":
 	main()
