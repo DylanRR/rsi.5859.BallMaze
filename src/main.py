@@ -15,6 +15,10 @@ LEFT_SECONDARY_LIMIT_SWITCH = 23
 RIGHT_SECONDARY_LIMIT_SWITCH = 24
 RIGHT_INITIAL_LIMIT_SWITCH = 25
 
+llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
+rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
+btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
+
 
 
 # Define other motor parameters
@@ -29,10 +33,12 @@ def setup_gpio():
 	GPIO.setup(DIRECTION_PIN, GPIO.OUT)
 	GPIO.setup(STEP_PIN, GPIO.OUT)
 	GPIO.setup(ENABLE_PIN, GPIO.OUT)
+	print("GPIO setup complete")
 
 # Cleanup GPIO
 def cleanup_gpio():
 	GPIO.cleanup()
+	print("GPIO cleanup complete")
 
 # Toggle motor function
 def toggle_motor(enabled):
@@ -57,9 +63,10 @@ def right_ls_halt():
   halt("Right Halt Limit Switch triggered")
 
 def setup_eStopInterrupts():
-	Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True).when_activated = left_ls_halt
-	Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True).when_activated = right_ls_halt
-	Button(HALT_PIN, pull_up=True, bounce_time=0.2).when_deactivated = e_stop_halt
+	llsHalt.when_pressed = left_ls_halt
+	rlsHalt.when_pressed = right_ls_halt
+	btnHalt.when_deactivated = e_stop_halt
+	print("E-Stop setup complete")
 	
 motorPause = True
 motorDelay = None
@@ -91,14 +98,16 @@ def left_ls():
 
 
 def setup_LSInterrupts():
-  Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = left_ls
-  Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = right_ls
+	Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = left_ls
+	Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True).when_activated = right_ls
+	print("Limit Switch setup complete")
 	
 
 
 def calibrateTrack():
 	print("Calibrating Track...")
 	global trackHomeCalibrated, trackEndCalibrated, trackPosition
+	toggle_motor(True)
 	GPIO.output(DIRECTION_PIN, GPIO.HIGH)
 	while not trackHomeCalibrated:
 		GPIO.output(STEP_PIN, GPIO.LOW)
@@ -113,6 +122,7 @@ def calibrateTrack():
 		time.sleep(0.01)
 		trackPosition += 1
 	trackSteps = trackEnd - trackHome
+	toggle_motor(False)
 	print(f"Track Calibrated: Home: {trackHome}, End: {trackEnd}, Steps: {trackSteps}")
     
 
@@ -129,26 +139,15 @@ def move_motor(steps, clockwise, delay=0.01):
   
 
 def main():
+	llsHalt.when_pressed = left_ls_halt
+	rlsHalt.when_pressed = right_ls_halt
+	btnHalt.when_deactivated = e_stop_halt
+	setup_gpio()
+	#setup_eStopInterrupts()
+	setup_LSInterrupts()
 	try:
-		setup_gpio()
-		setup_eStopInterrupts()
-		setup_LSInterrupts()
+		print("Starting...")
 		calibrateTrack()
-	finally:
-		toggle_motor(False)
-		cleanup_gpio()
-
-
-# Main function
-def testing():
-	try:
-		setup_gpio()
-		haltBTN = Button(HAULT_PIN, pull_up=True, bounce_time=0.2)
-		haltBTN.when_deactivated = halt
-		toggle_motor(True)
-		move_motor(steps=300, clockwise=True)
-		time.sleep(1)
-		move_motor(steps=300, clockwise=False)
 	finally:
 		toggle_motor(False)
 		cleanup_gpio()
