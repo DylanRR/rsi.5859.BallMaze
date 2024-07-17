@@ -10,6 +10,12 @@ STEP_PIN = 16
 ENABLE_PIN = 20
 HAULT_PIN = 4
 
+# Define other motor parameters
+motor_type = 'A4988'
+motor_mode = [-1,-1,-1]
+motor_pins = (DIRECTION_PIN, STEP_PIN)
+motor = RpiMotorLib.A4988Nema(DIRECTION_PIN, STEP_PIN, motor_mode, motor_type)
+
 # Initialize GPIO
 def setup_gpio():
 	GPIO.setmode(GPIO.BCM)
@@ -23,25 +29,20 @@ def cleanup_gpio():
 
 # Toggle motor function
 def toggle_motor(enabled):
-	GPIO.output(ENABLE_PIN, GPIO.HIGH if enabled else GPIO.LOW)
+	GPIO.output(ENABLE_PIN, GPIO.LOW if enabled else GPIO.HIGH)
 	print("Motor enabled" if enabled else "Motor disabled")
 
 # Move Motor
-def move_motor(steps, clockwise, delay=1):
-	GPIO.output(DIRECTION_PIN, GPIO.HIGH if clockwise else GPIO.LOW)
+def move_motor(steps, clockwise, delay=0.01):  # Adjust default delay as needed
+	direction = clockwise  # True for clockwise, False for counter-clockwise
+	motor.motor_go(direction, 'Full', steps, delay, False, .05)
 	print(f"Moving motor {'clockwise' if clockwise else 'counter-clockwise'}")
-	for step in range(steps):
-		GPIO.output(STEP_PIN, GPIO.LOW)
-		time.sleep(delay)
-		GPIO.output(STEP_PIN, GPIO.HIGH)
-		time.sleep(delay)
-		print(f"\rCurrent Step: {step + 1}/{steps}", end='', flush=True)
-	print()  # Ensure to print a newline at the end to move the cursor to the next line
+	print(f"Completed {steps} steps.")
 
 # E-STOP function
 def hault():
 	print("\nE-Stop button pressed")
-	toggle_motor(True)
+	toggle_motor(False)
 	print("Exiting...")
 	os._exit(1)
 
@@ -51,12 +52,12 @@ def main():
 		setup_gpio()
 		haultBTN = Button(HAULT_PIN, pull_up=True, bounce_time=0.2)
 		haultBTN.when_deactivated = hault
-		toggle_motor(False)
-		move_motor(steps=300, clockwise=True, delay=.0005)
-		time.sleep(5)
-		move_motor(steps=300, clockwise=False, delay=.0005)
 		toggle_motor(True)
+		move_motor(steps=300, clockwise=True)
+		time.sleep(1)
+		move_motor(steps=300, clockwise=False)
 	finally:
+		toggle_motor(False)
 		cleanup_gpio()
 
 if __name__ == "__main__":
