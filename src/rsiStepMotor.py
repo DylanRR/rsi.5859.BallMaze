@@ -12,15 +12,15 @@ class rsiStepMotor:
     self.homePosition = 0
     self.endPosition = 0
     self.steps = 0
-    self.direction = True    # True = Clockwise, False = Counter Clockwise
+    self.direction = None    # True = Clockwise, False = Counter Clockwise
     self.__mStep = OutputDevice(self.stepPin)
     self.__mDir = OutputDevice(self.dirPin)
     self.__mEnable = OutputDevice(self.enablePin)
     self.__stepDelay = 0.01
-    self.__rampingPower = False
+    self.__rampingPower = None
     self.__currentRampPower = 0
-    self.__internalMaxDelay = 0.1
-    self.__internalMinDelay = 0.00001
+    self.__internalMaxDelay = 0.0001
+    self.__internalMinDelay = 0.001
 
   def enableMotor(self):
     self.__mEnable.off()
@@ -62,7 +62,8 @@ class rsiStepMotor:
       self.__power = constrained_power
       self.__calcDelay(constrained_power)
       return
-    
+    print("Ramping Power")
+
     # Check if we are currently ramping
     if self.__rampingPower:
       # Check if the passed in power is above or below currentRampPower by 10%
@@ -74,32 +75,46 @@ class rsiStepMotor:
         self.__power = constrained_power
         self.__calcDelay(constrained_power)
       return
+    print("Not Currently Ramping Power")
 
     # If not ramping, check if the passed in power is 10% over or under current power
     if abs(constrained_power - self.__power) > self.__power * 0.1:
       self.__rampingPower = True
       self.__currentRampPower = self.__power
       self.__power = constrained_power
+      print("Power over/under 10%")
+      print(f"Current Power: {self.__currentRampPower}")
     else:
       self.__rampingPower = False
       self.__power = constrained_power
       self.__calcDelay(constrained_power)
   
-  def __updatePower(self): #Update
+  def __updatePower(self):
     if not self.__rampingPower:
-      return
-    if self.__currentRampPower == self.__power:
-      self.__rampingPower = False
-      return
-    if self.__currentRampPower > self.__power:
-      self.__currentRampPower -= .01
+        return
+    difference = self.__power - self.__currentRampPower
+    adjustment = difference * 0.01  # 5% of the difference
+
+    # Update the current ramp power without overshooting
+    if abs(adjustment) < 0.01:
+        self.__currentRampPower = self.__power
     else:
-      self.__currentRampPower += .01
+        self.__currentRampPower += adjustment
+
+    # Check if the target power is reached or exceeded
+    if (adjustment > 0 and self.__currentRampPower >= self.__power) or \
+        (adjustment < 0 and self.__currentRampPower <= self.__power):
+        self.__currentRampPower = self.__power
+        self.__rampingPower = False
+
     self.__calcDelay(self.__currentRampPower)
 
-  def moveMotor(self, steps, clockwise, power=50, trackPos=True):
+  def moveMotor(self, steps, clockwise, power=50, trackPos=True, overRideRamp=False):
+    print("MoveMotor Called...")
+    print(f"Steps: {steps}, Clockwise: {clockwise}, Power: {power}, TrackPos: {trackPos}, OverRideRamp: {overRideRamp}")
     self.setDirection(clockwise)
-    self.setPower(power)
+    self.setPower(power, not overRideRamp)
+    print(f"Power: {self.__power}, Step Delay: {self.__stepDelay}")
     for i in range(steps):
       self.__mStep.on()
       sleep(self.__stepDelay)
