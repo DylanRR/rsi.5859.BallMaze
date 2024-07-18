@@ -1,9 +1,7 @@
 from gpiozero import Button, OutputDevice
-import time
+from time import sleep
 import os
-
-ISR_LOCK = False
-ISR_SOFT_LOCK = False
+from rsiStepMotor import rsiStepMotor
 
 # Define GPIO pin numbers
 DIRECTION_PIN = 21
@@ -22,203 +20,113 @@ rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
 lls = Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True)
 rls = Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True)
-mDirection = OutputDevice(DIRECTION_PIN)
-mStep = OutputDevice(STEP_PIN)
-mEnable = OutputDevice(ENABLE_PIN, initial_value=True)  # Motor disabled initially
 
-# Toggle motor function
-def toggle_motor(enabled):
-  mEnable.value = not enabled  # False to enable, True to disable
-  print("Motor enabled" if enabled else "Motor disabled")
-
-# Set motor direction function
-def set_motor_direction(clockwise):
-  mDirection.value = clockwise
-  print(f"Motor direction set to {'clockwise' if clockwise else 'counter-clockwise'}")
+# Initialize Motor
+motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN)
 
 
-# Generic Halt function
-def halt(message):
-	#ISR Locking Flags
-	global ISR_LOCK
-	ISR_LOCK = True
-	print(f"\n{message}")
-	toggle_motor(False)
-	print("Exiting...")
-	os._exit(1)
-
-# E-STOP functions
-def e_stop_halt():
-  halt("E-Stop button pressed")
-
-def left_ls_halt():
-  halt("Left Halt Limit Switch triggered")
-
-def right_ls_halt():
-  halt("Right Halt Limit Switch triggered")
-
-	
-motorPause = True
-motorDelay = None
-encoderSpeed = None
-trackHome = None
-trackEnd = None
-trackSteps = None
-trackPosition = None
-
-# Calibrate Track
-
-trackHomeFineCalibrated = False
-
-trackHomeCalibrated = False
-def trackHomeCalibration():
-	global trackPosition, trackHomeCalibrated
-	if trackHomeCalibrated:
-		return
-	trackPosition = 0
-	trackHomeCalibrated = True
-	print("trackHomeCalibrated = True")
-
-def trackHomeFineCalibration():
-	global trackHomeFineCalibrated, trackHomeCalibrated, trackHome, trackPosition
-	if trackHomeFineCalibrated:
-		return
-	if not trackHomeCalibrated:
-		return
-	trackHome = 0
-	trackPosition = trackHome
-	trackHomeFineCalibrated = True
-	print("trackHomeFineCalibration = True")
-
+rlsFirstCalibration = False
+rlsSecondCalibration = False
+rlsLockOut = False
 def right_ls():
-	#ISR Locking Flags
-	global ISR_LOCK, ISR_SOFT_LOCK
-	if ISR_LOCK:
+	global rlsFirstCalibration, rlsSecondCalibration, rlsLockOut
+	if rlsLockOut:
 		return
-	ISR_LOCK = True
-	ISR_SOFT_LOCK = True
-	trackHomeCalibration()
-	trackHomeFineCalibration()
-	#ISR Unlocking Flags
-	ISR_SOFT_LOCK = False
-	ISR_LOCK = False
-
-
-
-trackEndCalibrated = False
-trackEndFineCalibrated = False
-def trackEndCalibration():
-	global trackEndCalibrated, trackPosition
-	if trackEndCalibrated:
+	
+	if not rlsFirstCalibration:
+		rlsFirstCalibration = True
+		rlsLockOut = True
 		return
-	trackEndCalibrated = True
-	print("trackEndCalibrated = True")
-
-def trackEndFineCalibration():
-	global trackEndFineCalibrated, trackEndCalibrated, trackEnd, trackPosition
-	if trackEndFineCalibrated:
+	
+	if not rlsSecondCalibration:
+		rlsSecondCalibration = True
+		rlsLockOut = True
 		return
-	if not trackEndCalibrated:
-		return
-	trackEndFineCalibrated = True
-	print("trackEndFineCalibration = True")
 
 
-
+llsFirstCalibration = False
+llsSecondCalibration = False
+llsLockOut = False
 def left_ls():
-	#ISR Locking Flags
-	global ISR_LOCK, ISR_SOFT_LOCK
-	if ISR_LOCK:
+	global llsFirstCalibration, llsSecondCalibration, llsLockOut
+	if llsLockOut:
 		return
-	ISR_LOCK = True
-	ISR_SOFT_LOCK = True
-	trackEndCalibration()
-	trackEndFineCalibration()
-	#ISR Unlocking Flags
-	ISR_SOFT_LOCK = False
-	ISR_LOCK = False
-		
+	
+	if not llsFirstCalibration:
+		llsFirstCalibration = True
+		llsLockOut = True
+		return
+	
+	if not llsSecondCalibration:
+		llsSecondCalibration = True
+		llsLockOut = True
+		return
+
 
 def calibrateTrack():
-	#ISR Locking Flags
-	global ISR_SOFT_LOCK
-	ISR_SOFT_LOCK = True
-	print("Calibrating Track...")
-	global trackHomeCalibrated, trackEndCalibrated, trackPosition, trackSteps, trackHomeFineCalibrated, trackEndFineCalibration
-	set_motor_direction(True)
-	while not trackHomeCalibrated:
-		mStep.on()
-		time.sleep(0.001)
-		mStep.off()
-		time.sleep(0.001)
-	move_motor(steps=100, clockwise=False)
-	set_motor_direction(True)
-	trackHomeFineCalibrated = False
-	while not trackHomeFineCalibrated:
-		mStep.on()
-		time.sleep(0.1)
-		mStep.off()
-		time.sleep(0.1)
-	move_motor(steps=20, clockwise=False)
-	trackHome = 0
-	trackPosition = trackHome
+	global rlsFirstCalibration, rlsSecondCalibration, rlsLockOut, llsFirstCalibration, llsSecondCalibration, llsLockOut
+	rlsFirstCalibration = False
+	rlsSecondCalibration = False
+	rlsLockOut = False
+	llsFirstCalibration = False
+	llsSecondCalibration = False
+	llsLockOut = False
+	tempHome = 0
+	tempEnd = None
 
-	set_motor_direction(False)
-	while not trackEndCalibrated:
-		mStep.on()
-		time.sleep(0.001)
-		mStep.off()
-		time.sleep(0.001)
-		trackPosition += 1
-	move_motor(steps=100, clockwise=True)
-	set_motor_direction(False)
-	trackEndFineCalibrated = False
-	while not trackEndFineCalibrated:
-		mStep.on()
-		time.sleep(0.1)
-		mStep.off()
-		time.sleep(0.1)
-		trackPosition += 1
-	move_motor(steps=20, clockwise=True)
-	trackEnd = trackPosition
-	trackSteps = trackEnd - trackHome
-	
-	trackSteps = trackEnd - trackHome
-	print(f"Track Calibrated: Home: {trackHome}, End: {trackEnd}, Steps: {trackSteps}")
-	ISR_SOFT_LOCK = False
+	while not (rlsFirstCalibration):
+		motor1.moveMotor(1, True, 80, False)
+	motor1.moveMotor(40, False, 40, False)
+	rlsLockOut = False
+
+	while not (rlsSecondCalibration):
+		motor1.moveMotor(1, True, 5, False)
+	motor1.moveMotor(20, True, 5, False)
+	rlsLockOut = False
+	motor1.overWriteCurrentPosition(tempHome)
+
+	while not (llsFirstCalibration):
+		motor1.moveMotor(1, False, 80, True)
+	motor1.moveMotor(40, True, 40, True)
+	llsLockOut = False
+
+	while not (llsSecondCalibration):
+		motor1.moveMotor(1, False, 5, True)
+	motor1.moveMotor(20, True, 5, True)
+	llsLockOut = False
+	tempEnd = motor1.getCurrentPosition()
+
+	motor1.calibrateTrack(tempHome, tempEnd)
+
+
+
+
+		
     
 
-# Move Motor
-def move_motor(steps, clockwise, delay=0.01):
-	global trackPosition
-	set_motor_direction(clockwise)
-	for step in range(steps):
-		mStep.on()
-		time.sleep(delay)
-		mStep.off()
-		time.sleep(delay)
-		trackPosition += -1 if clockwise else 1
-		print(f"\rCurrent Position: {trackPosition}", end='', flush=True)
-	print()
-
 #Setting Interrupts
-llsHalt.when_pressed = left_ls_halt
-rlsHalt.when_pressed = right_ls_halt
-btnHalt.when_deactivated = e_stop_halt
+llsHalt.when_pressed = lambda: motor1.haltMotor("Left Emergancy Limit Switch", True)
+rlsHalt.when_pressed = lambda: motor1.haltMotor("Right Emergancy Limit Switch", True)
+btnHalt.when_deactivated = lambda: motor1.haltMotor("E-Stop Button", True)
 lls.when_pressed = left_ls
 rls.when_pressed = right_ls
 
 def main():
 	try:
-		print("Starting...")
-		toggle_motor(True)
 		calibrateTrack()
-		move_motor(steps=round(trackSteps/2), clockwise=True, delay=0.001)
-		toggle_motor(False)
+		sleep(3)
+		tempTarget = motor1.getTrackSteps() / 2
+		motor1.moveMotor(tempTarget, True, 70)
+		if motor1.getCurrentPosition() == tempTarget:
+			print("Step tracking test passed")
+		else:
+			print("Step tracking test failed")
+
+
 	except Exception as e:
 		print(f"Error: {e}")
 	finally:
-		halt("Internal Halt")
+		motor1.haltMotor("Program Complete", True)
 
 
 if __name__ == "__main__":

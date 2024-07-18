@@ -4,24 +4,41 @@ import os
 
 class rsiStepMotor:
   def __init__(self, stepPin, dirPin, enablePin):
-    self.stepPin = stepPin
-    self.dirPin = dirPin
-    self.enablePin = enablePin
     self.__power = 1
-    self.currentPosition = 0
-    self.homePosition = 0
-    self.endPosition = 0
-    self.steps = 0
-    self.direction = None    # True = Clockwise, False = Counter Clockwise
-    self.__mStep = OutputDevice(self.stepPin)
-    self.__mDir = OutputDevice(self.dirPin)
-    self.__mEnable = OutputDevice(self.enablePin)
+    self.__currentPosition = 0
+    self.__homePosition = 0
+    self.__endPosition = None
+    self.__trackSteps = None
+    self.__direction = None    # True = Clockwise, False = Counter Clockwise
+    self.__mStep = OutputDevice(stepPin)
+    self.__mDir = OutputDevice(dirPin)
+    self.__mEnable = OutputDevice(enablePin)
     self.__stepDelay = 0.01
     self.__rampingPower = None
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.0001
     self.__internalMinDelay = 0.001
 
+  def calibrateTrack(self, homePosition, endPosition):
+    self.__homePosition = homePosition
+    self.__endPosition = endPosition
+    self.__trackSteps = endPosition - homePosition
+
+  def overWriteCurrentPosition(self, position):
+    self.__currentPosition = position
+
+  def getHomePosition(self):
+    return self.__homePosition
+  
+  def getEndPosition(self):
+    return self.__endPosition
+
+  def getTrackSteps(self):
+    return self.__trackSteps
+
+  def getCurrentPosition(self):
+    return self.__currentPosition
+  
   def enableMotor(self):
     self.__mEnable.off()
   
@@ -40,9 +57,10 @@ class rsiStepMotor:
     self.setPower(self.__power)
 
   def setDirection(self, clockwise): #True=Right (Clockwise), False=Left (Counter Clockwise)
-    if self.direction != clockwise:
+    if self.__direction != clockwise:
       self.resetRamping()
       self.__mDir.value = clockwise
+      self.__direction = clockwise
 
   def __calcDelay(self, power):
     # Map the constrained power to the delay range
@@ -121,6 +139,7 @@ class rsiStepMotor:
       self.__mStep.off()
       sleep(self.__stepDelay)
       if trackPos:
-        self.currentPosition += 1 if clockwise else -1
+        self.__currentPosition += 1 if clockwise else -1
       self.__updatePower()
+
   
