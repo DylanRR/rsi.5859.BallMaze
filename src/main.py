@@ -67,11 +67,28 @@ trackSteps = None
 trackPosition = None
 
 # Calibrate Track
-trackHomeCalibrated = False
-trackHomeFineCalibration = False
-trackEndCalibrated = False
-trackEndFineCalibration = False
 
+trackHomeFineCalibrated = False
+
+trackHomeCalibrated = False
+def trackHomeCalibration():
+	global trackPosition, trackHomeCalibrated
+	if trackHomeCalibrated:
+		return
+	trackPosition = 0
+	trackHomeCalibrated = True
+	print("trackHomeCalibrated = True")
+
+def trackHomeFineCalibration():
+	global trackHomeFineCalibrated, trackHomeCalibrated, trackHome, trackPosition
+	if trackHomeFineCalibrated:
+		return
+	if not trackHomeCalibrated:
+		return
+	trackHome = 0
+	trackPosition = trackHome
+	trackHomeFineCalibrated = True
+	print("trackHomeFineCalibration = True")
 
 def right_ls():
 	#ISR Locking Flags
@@ -80,22 +97,33 @@ def right_ls():
 		return
 	ISR_LOCK = True
 	ISR_SOFT_LOCK = True
-
-	global trackHomeCalibrated, trackHome, trackPosition, trackHomeFineCalibration
-
-	if not trackHomeCalibrated:
-		trackPosition = 0
-		move_motor(steps=100, clockwise=False)
-		trackHomeCalibrated = True
-	elif not trackHomeFineCalibration:
-		move_motor(steps=20, clockwise=False)
-		trackHome = 0
-		trackHomeFineCalibration = True
-		trackPosition = trackHome
-
+	trackHomeCalibration()
+	trackHomeFineCalibration()
 	#ISR Unlocking Flags
 	ISR_SOFT_LOCK = False
 	ISR_LOCK = False
+
+
+
+trackEndCalibrated = False
+trackEndFineCalibrated = False
+def trackEndCalibration():
+	global trackEndCalibrated, trackPosition
+	if trackEndCalibrated:
+		return
+	trackEndCalibrated = True
+	print("trackEndCalibrated = True")
+
+def trackEndFineCalibration():
+	global trackEndFineCalibrated, trackEndCalibrated, trackEnd, trackPosition
+	if trackEndFineCalibrated:
+		return
+	if not trackEndCalibrated:
+		return
+	trackEndFineCalibrated = True
+	print("trackEndFineCalibration = True")
+
+
 
 def left_ls():
 	#ISR Locking Flags
@@ -104,16 +132,8 @@ def left_ls():
 		return
 	ISR_LOCK = True
 	ISR_SOFT_LOCK = True
-
-	global trackEndCalibrated, trackEnd, trackPosition, trackEndFineCalibration
-	if not trackEndCalibrated:
-		move_motor(steps=100, clockwise=True, delay=0.001)
-		trackEndCalibrated = True
-	elif not trackEndFineCalibration:
-		move_motor(steps=20, clockwise=True, delay=0.001)
-		trackEnd = trackPosition
-		trackEndFineCalibration = True
-	
+	trackEndCalibration()
+	trackEndFineCalibration()
 	#ISR Unlocking Flags
 	ISR_SOFT_LOCK = False
 	ISR_LOCK = False
@@ -124,18 +144,24 @@ def calibrateTrack():
 	global ISR_SOFT_LOCK
 	ISR_SOFT_LOCK = True
 	print("Calibrating Track...")
-	global trackHomeCalibrated, trackEndCalibrated, trackPosition, trackSteps, trackHomeFineCalibration, trackEndFineCalibration
+	global trackHomeCalibrated, trackEndCalibrated, trackPosition, trackSteps, trackHomeFineCalibrated, trackEndFineCalibration
 	set_motor_direction(True)
 	while not trackHomeCalibrated:
 		mStep.on()
 		time.sleep(0.001)
 		mStep.off()
 		time.sleep(0.001)
-	while not trackHomeFineCalibration:
+	move_motor(steps=100, clockwise=False)
+	set_motor_direction(True)
+	trackHomeFineCalibrated = False
+	while not trackHomeFineCalibrated:
 		mStep.on()
 		time.sleep(0.1)
 		mStep.off()
 		time.sleep(0.1)
+	move_motor(steps=20, clockwise=False)
+	trackHome = 0
+	trackPosition = trackHome
 
 	set_motor_direction(False)
 	while not trackEndCalibrated:
@@ -144,12 +170,18 @@ def calibrateTrack():
 		mStep.off()
 		time.sleep(0.001)
 		trackPosition += 1
-	while not trackEndFineCalibration:
+	move_motor(steps=100, clockwise=True)
+	set_motor_direction(False)
+	trackEndFineCalibrated = False
+	while not trackEndFineCalibrated:
 		mStep.on()
 		time.sleep(0.1)
 		mStep.off()
 		time.sleep(0.1)
 		trackPosition += 1
+	move_motor(steps=20, clockwise=True)
+	trackEnd = trackPosition
+	trackSteps = trackEnd - trackHome
 	
 	trackSteps = trackEnd - trackHome
 	print(f"Track Calibrated: Home: {trackHome}, End: {trackEnd}, Steps: {trackSteps}")
@@ -159,7 +191,6 @@ def calibrateTrack():
 # Move Motor
 def move_motor(steps, clockwise, delay=0.01):
 	global trackPosition
-	toggle_motor(True)
 	set_motor_direction(clockwise)
 	for step in range(steps):
 		mStep.on()
@@ -178,11 +209,16 @@ lls.when_pressed = left_ls
 rls.when_pressed = right_ls
 
 def main():
-	print("Starting...")
-	toggle_motor(True)
-	calibrateTrack()
-	move_motor(steps=round(trackSteps/2), clockwise=True, delay=0.001)
-	toggle_motor(False)
+	try:
+		print("Starting...")
+		toggle_motor(True)
+		calibrateTrack()
+		move_motor(steps=round(trackSteps/2), clockwise=True, delay=0.001)
+		toggle_motor(False)
+	except Exception as e:
+		print(f"Error: {e}")
+	finally:
+		halt("Internal Halt")
 
 
 if __name__ == "__main__":
