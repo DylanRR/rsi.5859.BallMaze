@@ -80,7 +80,6 @@ class rsiStepMotor:
       self.__power = constrained_power
       self.__calcDelay(constrained_power)
       return
-    print("Ramping Power")
 
     # Check if we are currently ramping
     if self.__rampingPower:
@@ -93,15 +92,12 @@ class rsiStepMotor:
         self.__power = constrained_power
         self.__calcDelay(constrained_power)
       return
-    print("Not Currently Ramping Power")
 
     # If not ramping, check if the passed in power is 10% over or under current power
     if abs(constrained_power - self.__power) > self.__power * 0.1:
       self.__rampingPower = True
       self.__currentRampPower = self.__power
       self.__power = constrained_power
-      print("Power over/under 10%")
-      print(f"Current Power: {self.__currentRampPower}")
     else:
       self.__rampingPower = False
       self.__power = constrained_power
@@ -128,18 +124,15 @@ class rsiStepMotor:
     self.__calcDelay(self.__currentRampPower)
 
   def moveMotor(self, steps, clockwise, power=50, trackPos=True, overRideRamp=False):
-    print("MoveMotor Called...")
-    print(f"Steps: {steps}, Clockwise: {clockwise}, Power: {power}, TrackPos: {trackPos}, OverRideRamp: {overRideRamp}")
     self.setDirection(clockwise)
     self.setPower(power, not overRideRamp)
-    print(f"Power: {self.__power}, Step Delay: {self.__stepDelay}")
     for i in range(steps):
       self.__mStep.on()
       sleep(self.__stepDelay)
       self.__mStep.off()
       sleep(self.__stepDelay)
       if trackPos:
-        self.__currentPosition += 1 if clockwise else -1
+        self.__currentPosition += -1 if clockwise else 1
       self.__updatePower()
 
   

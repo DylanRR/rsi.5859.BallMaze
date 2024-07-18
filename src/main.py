@@ -76,23 +76,23 @@ def calibrateTrack():
 
 	while not (rlsFirstCalibration):
 		motor1.moveMotor(1, True, 80, False)
-	motor1.moveMotor(40, False, 40, False)
+	motor1.moveMotor(500, False, 5, False)
 	rlsLockOut = False
 
 	while not (rlsSecondCalibration):
-		motor1.moveMotor(1, True, 5, False)
-	motor1.moveMotor(20, True, 5, False)
+		motor1.moveMotor(1, True, .001, False)
+	motor1.moveMotor(20, True, 1, False)
 	rlsLockOut = False
 	motor1.overWriteCurrentPosition(tempHome)
 
 	while not (llsFirstCalibration):
 		motor1.moveMotor(1, False, 80, True)
-	motor1.moveMotor(40, True, 40, True)
+	motor1.moveMotor(500, True, 5, True)
 	llsLockOut = False
 
 	while not (llsSecondCalibration):
-		motor1.moveMotor(1, False, 5, True)
-	motor1.moveMotor(20, True, 5, True)
+		motor1.moveMotor(1, False, .001, True)
+	motor1.moveMotor(20, True, 1, True)
 	llsLockOut = False
 	tempEnd = motor1.getCurrentPosition()
 
@@ -115,7 +115,14 @@ def main():
 	try:
 		calibrateTrack()
 		sleep(3)
-		tempTarget = motor1.getTrackSteps() / 2
+		print("Calibration Complete")
+		tempHome = motor1.getHomePosition()
+		tempEnd = motor1.getEndPosition()
+		tempSteps = motor1.getTrackSteps()
+		print(f"Home: {tempHome}, End: {tempEnd}, Steps: {tempSteps}")
+
+		tempTarget = round(motor1.getTrackSteps() / 2)
+		print(f"Target: {tempTarget}")
 		motor1.moveMotor(tempTarget, True, 70)
 		if motor1.getCurrentPosition() == tempTarget:
 			print("Step tracking test passed")
