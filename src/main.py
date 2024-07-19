@@ -1,4 +1,4 @@
-from gpiozero import Button, OutputDevice
+from gpiozero import Button, OutputDevice, Device
 from time import sleep
 import os
 from rsiStepMotor import rsiStepMotor
@@ -141,12 +141,14 @@ def encoderISR():
 	if encoder1.getSpeed() == 0:
 		encoderRunningFlag = False
 		motor1.exitMotorMove()
+		motor1.resetRamping()
 		return
 	encoderRunningFlag = True
 	
 
 def haltISR(haltCode, hardExit):
 	encoder1.setIRSLock(True)
+	Device.close(INTB_PIN)
 	motor1.haltMotor(haltCode, hardExit)
 
 
@@ -160,21 +162,23 @@ rls.when_pressed = right_ls
 intb_pin.when_pressed = encoderISR
 
 def IR_RUN_STATE():
-		if not encoderRunningFlag:
-			return
-		
-		direction = encoder1.getDirection()
-		speed = encoder1.getSpeed()
-		position = motor1.getCurrentPosition()
-		step_goal = None
-		if direction:
-			step_goal = position - motor1.getHomePosition()
-		else:
-			step_goal = motor1.getEndPosition() - position
-		
-		motor1.moveMotor(step_goal, direction, speed)
-		while encoderRunningFlag:
-			encoder1.__updateSpeed()
+	if not encoderRunningFlag:
+		return
+	
+	direction = encoder1.getDirection()
+	#speed = encoder1.getSpeed()
+	testingSpeed = 20
+	position = motor1.getCurrentPosition()
+	step_goal = None
+	if direction:
+		step_goal = position - motor1.getHomePosition()
+	else:
+		step_goal = motor1.getEndPosition() - position
+	
+	motor1.moveMotor(step_goal, direction, testingSpeed)
+	while encoderRunningFlag:
+		#motor1.setPower(encoder1.getSpeed())
+		motor1.setPower(testingSpeed)
 
 
 def main():

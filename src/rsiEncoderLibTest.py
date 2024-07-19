@@ -38,3 +38,5 @@ intb_pin.when_pressed = encoder1.isr
 
 # Keep the script running
 input("Press enter to quit\n\n")
+# Cleanup
+intb_pin.close()
