@@ -84,17 +84,17 @@ class rsiEncoder:
       self.__direction = self.__flipDirection
       self.__directionCount = 0
 
-  def __updateLastTrigger(self):
+  def __updateSpeed(self):
     if self.__lastTrigger == None:
       self.__lastTrigger = time.time()
-
-  def __updateSpeed(self):
+      return
+    
     timeDiff = (time.time() * 1000) - (self.__lastTrigger * 1000)
     if timeDiff > self.__encoderTimeout:
       self.__encoderSpeed = 0
     else:
       self.__encoderSpeed = 100.0 * (1.0 - (timeDiff / self.__encoderTimeout))
-    self.__updateLastTrigger()
+    self.__lastTrigger = time.time()
 
   def getSpeed(self):
     return self.__encoderSpeed
