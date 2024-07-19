@@ -85,8 +85,9 @@ class rsiEncoder:
     else:
       print("CCW")
 
-  def isr(self, encoderA_Val, encoderB_Val):
+  def isr(self):
     if self.__IRS_LOCK:
       return
-    self.__updateEncoderDirection(encoderA_Val, encoderB_Val)
+    self.__updateEncoderDirection()
+    self.__testPrintDir()
     
