@@ -92,8 +92,9 @@ class rsiEncoder:
     timeDiff = (time.time() * 1000) - (self.__lastTrigger * 1000)
     if timeDiff > self.__encoderTimeout:
       self.__encoderSpeed = 0
-      return
-    self.__encoderSpeed = 100.0 * (1.0 - (timeDiff / self.__encoderTimeout))
+    else:
+      self.__encoderSpeed = 100.0 * (1.0 - (timeDiff / self.__encoderTimeout))
+    self.__updateLastTrigger()
 
   def getSpeed(self):
     return self.__encoderSpeed
@@ -111,6 +112,5 @@ class rsiEncoder:
       return
     self.__updateEncoderDirection()
     self.__updateSpeed()
-    self.__updateLastTrigger()
     self.__testPrint()
     
