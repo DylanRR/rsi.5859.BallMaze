@@ -18,6 +18,10 @@ class rsiStepMotor:
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.0001
     self.__internalMinDelay = 0.001
+    self.__pauseMotorMove = False
+
+  def exitMotorMove(self):
+    self.__pauseMotorMove = True
 
   def calibrateTrack(self, homePosition, endPosition):
     self.__homePosition = homePosition
@@ -134,5 +138,8 @@ class rsiStepMotor:
       if trackPos:
         self.__currentPosition += -1 if clockwise else 1
       self.__updatePower()
+      if self.__pauseMotorMove:
+        self.__pauseMotorMove = False
+        break
 
   

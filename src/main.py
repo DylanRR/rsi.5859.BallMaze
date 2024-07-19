@@ -132,6 +132,7 @@ def initializeEncoderInterrupts():
 	# Configure interrupts to trigger on a change
 	mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
+
 encoderRunningFlag = False
 def encoderISR():
 	global encoderRunningFlag
@@ -139,6 +140,8 @@ def encoderISR():
 	encoder1.isr()
 	if encoder1.getSpeed() == 0:
 		encoderRunningFlag = False
+		motor1.exitMotorMove()
+		return
 	encoderRunningFlag = True
 	
 
@@ -156,7 +159,24 @@ rls.when_pressed = right_ls
 
 intb_pin.when_pressed = encoderISR
 
-tempDir = None
+def IR_RUN_STATE():
+		if not encoderRunningFlag:
+			return
+		
+		direction = encoder1.getDirection()
+		speed = encoder1.getSpeed()
+		position = motor1.getCurrentPosition()
+		step_goal = None
+		if direction:
+			step_goal = position - motor1.getHomePosition()
+		else:
+			step_goal = motor1.getEndPosition() - position
+		
+		motor1.moveMotor(step_goal, direction, speed)
+		while encoderRunningFlag:
+			encoder1.__updateSpeed()
+
+
 def main():
 	global encoderRunningFlag, tempDir
 	try:
@@ -164,35 +184,12 @@ def main():
 		sleep(3)
 		steps2Mid = round(motor1.getEndPosition() / 2) 
 		motor1.moveMotor(steps2Mid, True, 80, True)
-		
+		sleep(3)
 		while True:
-			while encoderRunningFlag:
-				encDir = encoder1.getDirection()
-				encSpd = encoder1.getSpeed()
-				if tempDir == None:
-					tempDir = encDir
-				if tempDir == encDir:
-					motor1.setPower(encSpd)
-					next
-				
-				if encoder1.getDirection():
-					print(f"CW, Speed: {encoder1.getSpeed()}")
-					stepGoal = motor1.getCurrentPosition() - motor1.getHomePosition()
-					motor1.moveMotor(stepGoal, True, 20) # Pass in encoder speed
-				else:
-					print(f"CCW, Speed: {encoder1.getSpeed()}")
-					stepGoal = motor1.getEndPosition() - motor1.getCurrentPosition()
-					motor1.moveMotor(stepGoal, False, 20) # Pass in encoder speed
-
-		
-		
-		# Keep the script running
-		input("Press enter to quit\n\n")
-
+			IR_RUN_STATE()
 	except Exception as e:
 		print(f"Error: {e}")
-	finally:
-		motor1.haltMotor("Program Complete", True)
+		motor1.haltMotor("Internal Error", True)
 
 
 if __name__ == "__main__":

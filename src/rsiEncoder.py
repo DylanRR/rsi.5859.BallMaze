@@ -15,9 +15,6 @@ class rsiEncoder:
     self.encoderA = self.__mcpObj.get_pin(self.aPin)
     self.encoderB = self.__mcpObj.get_pin(self.bPin)
     self.__setupEncoderPins()
-    self.__count = 0
-    self.__last_encoderA_state = None
-    self.__last_encoderB_state = None
     self.__direction = None   # True for CW, False for CCW
     self.__flipDirection = None
     self.__directionCount = 0
@@ -29,7 +26,6 @@ class rsiEncoder:
     self.__lastTrigger = None
     self.__encoderSpeed = 0
     self.__encoderTimeout = 250 # 250ms Default timeout
-    self.__timeDeltaSpread = 1000
     
 
   def __setupEncoderPins(self):
@@ -116,5 +112,5 @@ class rsiEncoder:
       return
     self.__updateEncoderDirection()
     self.__updateSpeed()
-    self.__testPrint()
+    #self.__testPrint()
     
