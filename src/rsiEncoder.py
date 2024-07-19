@@ -4,7 +4,7 @@ import board
 import busio
 from digitalio import Direction, Pull
 import digitalio
-from datetime import time
+import time
 
 class rsiEncoder:
   def __init__(self, A_PIN, B_PIN, mcpObj):
@@ -104,6 +104,10 @@ class rsiEncoder:
       print(f"CW, Speed: {self.getSpeed()}")
     else:
       print(f"CCW, Speed: {self.getSpeed()}")
+
+  def getDirection(self):
+    self.__updateEncoderDirection()
+    return self.__direction
   
 
 

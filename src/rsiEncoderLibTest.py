@@ -33,6 +33,7 @@ intb_pin = Button(INTB_PIN, pull_up=True)
 # Setup the encoder
 encoder1 = rsiEncoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN, mcp)
 
+
 intb_pin.when_pressed = encoder1.isr
 
 # Keep the script running

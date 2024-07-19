@@ -132,20 +132,19 @@ def initializeEncoderInterrupts():
 	# Configure interrupts to trigger on a change
 	mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
+encoderRunningFlag = False
 def encoderISR():
+	global encoderRunningFlag
+	print("ISR Triggered")
 	encoder1.isr()
-	if encoder1.getDirection():
-		print(f"CW, Speed: {encoder1.getSpeed()}")
-		stepGoal = motor1.getCurrentPosition - motor1.getHomePosition
-		motor1.moveMotor(stepGoal, True, encoder1.getSpeed(), True)
-	else:
-		print(f"CCW, Speed: {encoder1.getSpeed()}")
-		stepGoal = motor1.getEndPosition - motor1.getCurrentPosition
-		motor1.moveMotor(stepGoal, False, encoder1.getSpeed())
+	if encoder1.getSpeed() == 0:
+		encoderRunningFlag = False
+	encoderRunningFlag = True
+	
 
-def haltISR(haltCode):
+def haltISR(haltCode, hardExit):
 	encoder1.setIRSLock(True)
-	motor1.haltMotor(haltCode, True)
+	motor1.haltMotor(haltCode, hardExit)
 
 
 #Setting Interrupts
@@ -157,10 +156,34 @@ rls.when_pressed = right_ls
 
 intb_pin.when_pressed = encoderISR
 
+tempDir = None
 def main():
+	global encoderRunningFlag, tempDir
 	try:
 		calibrateTrack()
 		sleep(3)
+		steps2Mid = round(motor1.getEndPosition() / 2) 
+		motor1.moveMotor(steps2Mid, True, 80, True)
+		
+		while True:
+			while encoderRunningFlag:
+				encDir = encoder1.getDirection()
+				encSpd = encoder1.getSpeed()
+				if tempDir == None:
+					tempDir = encDir
+				if tempDir == encDir:
+					motor1.setPower(encSpd)
+					next
+				
+				if encoder1.getDirection():
+					print(f"CW, Speed: {encoder1.getSpeed()}")
+					stepGoal = motor1.getCurrentPosition() - motor1.getHomePosition()
+					motor1.moveMotor(stepGoal, True, 20) # Pass in encoder speed
+				else:
+					print(f"CCW, Speed: {encoder1.getSpeed()}")
+					stepGoal = motor1.getEndPosition() - motor1.getCurrentPosition()
+					motor1.moveMotor(stepGoal, False, 20) # Pass in encoder speed
+
 		
 		
 		# Keep the script running
