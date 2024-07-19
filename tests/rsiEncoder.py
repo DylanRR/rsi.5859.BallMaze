@@ -4,6 +4,7 @@ import board
 import busio
 from digitalio import Direction, Pull
 import digitalio
+from datetime import time
 
 class rsiEncoder:
   def __init__(self, A_PIN, B_PIN, mcpObj):
@@ -24,6 +25,11 @@ class rsiEncoder:
     self.__prev_encoderA_val = 0
     self.__prev_encoderB_val = 0
     self.__IRS_LOCK = False
+
+    self.__lastTrigger = None
+    self.__encoderSpeed = 0
+    self.__encoderTimeout = 250 # 250ms Default timeout
+    self.__timeDeltaSpread = 1000
     
 
   def __setupEncoderPins(self):
@@ -78,16 +84,33 @@ class rsiEncoder:
       self.__direction = self.__flipDirection
       self.__directionCount = 0
 
+  def __updateLastTrigger(self):
+    if self.__lastTrigger == None:
+      self.__lastTrigger = time.time()
 
-  def __testPrintDir(self):
+  def __updateSpeed(self):
+    timeDiff = (time.time() * 1000) - (self.__lastTrigger * 1000)
+    if timeDiff > self.__encoderTimeout:
+      self.__encoderSpeed = 0
+      return
+    self.__encoderSpeed = 100.0 * (1.0 - (timeDiff / self.__encoderTimeout))
+
+  def getSpeed(self):
+    return self.__encoderSpeed
+  
+  def __testPrint(self):
     if self.__direction:
-      print("CW")
+      print(f"CW, Speed: {self.getSpeed()}")
     else:
-      print("CCW")
+      print(f"CCW, Speed: {self.getSpeed()}")
+  
+
 
   def isr(self):
     if self.__IRS_LOCK:
       return
     self.__updateEncoderDirection()
-    self.__testPrintDir()
+    self.__updateSpeed()
+    self.__updateLastTrigger()
+    self.__testPrint()
     
