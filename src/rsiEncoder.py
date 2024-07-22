@@ -26,6 +26,7 @@ class rsiEncoder:
     self.__lastTrigger = None
     self.__encoderSpeed = 0
     self.__encoderTimeout = 250 # 250ms Default timeout
+    self.encoderRunning = False
     
 
   def __setupEncoderPins(self):
@@ -92,6 +93,13 @@ class rsiEncoder:
       self.__encoderSpeed = 100.0 * (1.0 - (timeDiff / self.__encoderTimeout))
     self.__lastTrigger = time.time()
 
+  def __checkEncoderRunning(self):
+    if self.getSpeed() == 0:
+      self.encoderRunning = False
+
+  def isEncoderRunning(self):
+    return self.encoderRunning
+
   def getSpeed(self):
     return self.__encoderSpeed
   
@@ -112,5 +120,6 @@ class rsiEncoder:
       return
     self.__updateEncoderDirection()
     self.__updateSpeed()
+    self.__checkEncoderRunning()
     self.__testPrint()
     

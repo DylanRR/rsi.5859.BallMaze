@@ -4,7 +4,7 @@ import os
 
 class rsiStepMotor:
   def __init__(self, stepPin, dirPin, enablePin):
-    self.__power = 1
+    self.__power = 0
     self.__currentPosition = 0
     self.__homePosition = 0
     self.__endPosition = None
@@ -18,10 +18,7 @@ class rsiStepMotor:
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.0001
     self.__internalMinDelay = 0.001
-    self.__pauseMotorMove = False
-
-  def exitMotorMove(self):
-    self.__pauseMotorMove = True
+    self.encoderRunning = False
 
   def calibrateTrack(self, homePosition, endPosition):
     self.__homePosition = homePosition
@@ -127,10 +124,19 @@ class rsiStepMotor:
 
     self.__calcDelay(self.__currentRampPower)
 
+  def __checkForExit(self):
+    if self.__power == 0:
+      self.encoderRunning = False
+      self.resetRamping()
+      
+
   def moveMotor(self, steps, clockwise, power=50, trackPos=True, overRideRamp=False):
     self.setDirection(clockwise)
     self.setPower(power, not overRideRamp)
+    self.encoderRunning = True
     for i in range(steps):
+      if not self.encoderRunning:
+        break
       self.__mStep.on()
       sleep(self.__stepDelay)
       self.__mStep.off()
@@ -138,8 +144,6 @@ class rsiStepMotor:
       if trackPos:
         self.__currentPosition += -1 if clockwise else 1
       self.__updatePower()
-      if self.__pauseMotorMove:
-        self.__pauseMotorMove = False
-        break
+      self.__checkForExit()
 
   
