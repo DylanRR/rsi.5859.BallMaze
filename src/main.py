@@ -7,6 +7,7 @@ from rsiEncoder import rsiEncoder
 from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
 import busio
+import threading
 
 # Define GPIO pin numbers
 DIRECTION_PIN = 21
@@ -151,6 +152,10 @@ def haltISR(haltCode, hardExit):
 	Device.close(INTB_PIN)
 	motor1.haltMotor(haltCode, hardExit)
 
+def threaded_encoderISR():
+	thread = threading.Thread(target=encoderISR)
+	thread.start()
+
 
 #Setting Interrupts
 llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
@@ -159,7 +164,7 @@ btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 lls.when_pressed = left_ls
 rls.when_pressed = right_ls
 
-intb_pin.when_pressed = encoderISR
+intb_pin.when_pressed = threaded_encoderISR
 
 def IR_RUN_STATE():
 	if not encoderRunningFlag:
