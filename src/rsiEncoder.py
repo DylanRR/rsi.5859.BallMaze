@@ -112,5 +112,5 @@ class rsiEncoder:
       return
     self.__updateEncoderDirection()
     self.__updateSpeed()
-    #self.__testPrint()
+    self.__testPrint()
     

@@ -5,6 +5,8 @@ from adafruit_mcp230xx.mcp23017 import MCP23017
 from gpiozero import Button
 import signal
 from rsiEncoder import rsiEncoder
+import threading
+from time import sleep
 
 INTB_PIN = 12
 MCP_ENCODER_A_PIN = 8
@@ -33,8 +35,14 @@ intb_pin = Button(INTB_PIN, pull_up=True)
 # Setup the encoder
 encoder1 = rsiEncoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN, mcp)
 
+def start_isr_thread():
+    threading.Thread(target=encoder1.isr).start()
 
-intb_pin.when_pressed = encoder1.isr
+intb_pin.when_pressed = start_isr_thread
+
+while(True):
+  print("loop")
+  sleep(2)
 
 # Keep the script running
 input("Press enter to quit\n\n")
