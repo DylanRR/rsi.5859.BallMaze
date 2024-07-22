@@ -6,7 +6,7 @@ from gpiozero import Button
 import signal
 from rsiEncoder import rsiEncoder
 import threading
-from time import sleep
+import time
 from rsiStepMotor import rsiStepMotor
 
 INTB_PIN = 12
@@ -41,9 +41,14 @@ def start_isr_thread():
 
 intb_pin.when_pressed = start_isr_thread
 
-while(True):
-  print("loop")
-  sleep(2)
+while True:
+  last_trigger_time = encoder1.getLastTrigger()
+  if last_trigger_time is None:
+    last_trigger_time = time.time()  # Use current time as fallback
+
+  tempTime = (time.time() - last_trigger_time) * 1000
+  if tempTime > encoder1.getTimeout():
+    encoder1.isr()
 
 # Keep the script running
 input("Press enter to quit\n\n")

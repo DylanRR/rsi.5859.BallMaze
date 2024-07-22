@@ -18,10 +18,11 @@ class rsiEncoder:
     self.__direction = None   # True for CW, False for CCW
     self.__flipDirection = None
     self.__directionCount = 0
-    self.__directionDelta = 2
+    self.__directionDelta = 3
     self.__prev_encoderA_val = 0
     self.__prev_encoderB_val = 0
     self.__IRS_LOCK = False
+    self.__speedRanges = [80, 60, 40, 20, 0]
 
     self.__lastTrigger = None
     self.__encoderSpeed = 0
@@ -81,16 +82,42 @@ class rsiEncoder:
       self.__direction = self.__flipDirection
       self.__directionCount = 0
 
+  def getLastTrigger(self):
+    if self.__lastTrigger == None:
+      self.__lastTrigger = time.time()
+      return
+    return self.__lastTrigger
+  
+  def getTimeout(self):
+    return self.__encoderTimeout
+
   def __updateSpeed(self):
     if self.__lastTrigger == None:
       self.__lastTrigger = time.time()
       return
-    
+      
     timeDiff = (time.time() * 1000) - (self.__lastTrigger * 1000)
-    if timeDiff > self.__encoderTimeout:
-      self.__encoderSpeed = 0
-    else:
-      self.__encoderSpeed = 100.0 * (1.0 - (timeDiff / self.__encoderTimeout))
+
+    # Dictionary mapping time thresholds to speeds
+    speed_map = {
+      15: 0,
+      13: 10,
+      11: 20,
+      9: 30,
+      7: 40,
+      5: 50,
+      4: 60,
+      3: 65,
+      2: 75,
+      1: 85
+    }
+
+    # Iterate through the dictionary to find the appropriate speed
+    for threshold, speed in sorted(speed_map.items(), reverse=True):
+      if timeDiff > threshold:
+        self.__encoderSpeed = speed
+        break
+
     self.__lastTrigger = time.time()
 
   def __checkEncoderRunning(self):
@@ -123,5 +150,6 @@ class rsiEncoder:
     self.__updateEncoderDirection()
     self.__updateSpeed()
     self.__checkEncoderRunning()
-    self.__testPrint()
+    print(f"Speed: {self.__encoderSpeed}")
+    #self.__testPrint()
     

@@ -8,6 +8,7 @@ from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
 import busio
 import threading
+import time
 
 # Define GPIO pin numbers
 DIRECTION_PIN = 21
@@ -144,11 +145,12 @@ def haltISR(haltCode, hardExit):
 
 
 def IR_RUN_STATE():
+	print("IR_RUN_STATE")
 	if not encoder1.isEncoderRunning():
 		return
 	
 	direction = encoder1.getDirection()
-	#speed = encoder1.getSpeed()
+	speed = encoder1.getSpeed()
 	position = motor1.getCurrentPosition()
 	step_goal = None
 	if direction:
@@ -156,9 +158,15 @@ def IR_RUN_STATE():
 	else:
 		step_goal = motor1.getEndPosition() - position
 	
-	motor1.moveMotor(step_goal, direction, 15) #Use 15 just to start off the motor, the speed will be updated below
+	motor1.moveMotor(step_goal, direction, speed)
 	while encoder1.isEncoderRunning():
 		motor1.setPower(encoder1.getSpeed())
+		last_trigger_time = encoder1.getLastTrigger()
+
+		tempTime = (time.time() - last_trigger_time) * 1000
+		if tempTime > encoder1.getTimeout():
+			encoder1.isr()
+
 	motor1.setPower(0)
 
 
