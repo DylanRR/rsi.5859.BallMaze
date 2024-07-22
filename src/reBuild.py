@@ -1,0 +1,120 @@
+from gpiozero import Button, OutputDevice, Device
+from time import sleep
+import os
+from rsiStepMotor import rsiStepMotor
+from limitSwitch import limitSwitch
+from rsiEncoder import rsiEncoder
+from adafruit_mcp230xx.mcp23017 import MCP23017
+import board
+import busio
+import threading
+import time
+
+# Define GPIO pin numbers
+DIRECTION_PIN = 21
+STEP_PIN = 16
+ENABLE_PIN = 20
+HALT_PIN = 4
+
+# Define Encoder pins
+MCP_ENCODER_A_PIN = 8
+MCP_ENCODER_B_PIN = 9
+INTB_PIN = 12
+
+# Define Limit Switch pins
+LEFT_INITIAL_LIMIT_SWITCH = 18
+LEFT_SECONDARY_LIMIT_SWITCH = 23
+RIGHT_SECONDARY_LIMIT_SWITCH = 24
+RIGHT_INITIAL_LIMIT_SWITCH = 25
+
+
+
+# Initialize GPIO devices
+llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
+rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
+btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
+intb_pin = Button(INTB_PIN, pull_up=True)
+
+# Initialize Motor
+motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN)
+
+# Initialize I2C bus and MCP23017
+i2c = busio.I2C(board.SCL, board.SDA)
+mcp = MCP23017(i2c, address=0x20)
+
+# Initialize Encoder
+encoder1 = rsiEncoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN, mcp)
+
+# Initialize Limit Switches
+leftSwitch = limitSwitch(LEFT_INITIAL_LIMIT_SWITCH, [encoder1])
+rightSwitch = limitSwitch(RIGHT_INITIAL_LIMIT_SWITCH, [encoder1])
+
+def initializeEncoderInterrupts():
+	mcp.interrupt_enable = 0xFFFF
+	mcp.interrupt_configuration = 0x0000  # interrupt on any change
+	mcp.io_control = 0x44  # Interrupt as open drain and mirrored
+	mcp.clear_ints()  # Interrupts need to be cleared initially
+	# Configure interrupts to trigger on a change
+	mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
+
+def haltISR(haltCode, hardExit):
+	encoder1.setIRSLock(True)
+	Device.close(INTB_PIN)
+	motor1.haltMotor(haltCode, hardExit)
+
+def moveUntilCondition(condition, steps, direction, speed, flag):
+  while not condition():
+    motor1.moveMotor(steps, direction, speed, flag)
+
+def calibrateTrack():
+	encoder1.setIRSLock(True)
+	tempHome = 0
+	tempEnd = None
+
+	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 80, False)
+	motor1.moveMotor(500, False, 5, False)
+	rightSwitch.setLockedOut(False)
+
+	moveUntilCondition(lambda: rightSwitch.getSecondCalibration(), 1, True, 0.001, False)
+	motor1.moveMotor(20, True, 1, False)
+	rightSwitch.setLockedOut(False)
+	motor1.overWriteCurrentPosition(tempHome)
+
+	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 80, True)
+	motor1.moveMotor(500, True, 5, True)
+	leftSwitch.setLockedOut(False)
+
+	moveUntilCondition(lambda: leftSwitch.getSecondCalibration(), 1, False, 0.001, True)
+	motor1.moveMotor(20, True, 1, True)
+	leftSwitch.setLockedOut(False)
+	tempEnd = motor1.getCurrentPosition()
+
+	motor1.calibrateTrack(tempHome, tempEnd)
+	print("Calibration Complete....")
+	encoder1.setIRSLock(False)
+	
+def IR_RUN_STATE():
+  pass
+
+
+
+
+def encoderISR():
+	threading.Thread(target=encoder1.isr).start()
+
+intb_pin.when_pressed = encoderISR
+	
+llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
+rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
+btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
+
+
+def main():
+	try:
+		pass
+	except Exception as e:
+		print(f"Error: {e}")
+		motor1.haltMotor("Internal Error", True)
+
+if __name__ == "__main__":
+	main()
