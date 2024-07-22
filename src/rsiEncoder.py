@@ -118,8 +118,8 @@ class rsiEncoder:
 
 
   def isr(self):
-    if self.__IRS_LOCK:
-      return
+    #if self.__IRS_LOCK:
+    # return
     self.__updateEncoderDirection()
     self.__updateSpeed()
     self.__checkEncoderRunning()

@@ -134,7 +134,7 @@ def initializeEncoderInterrupts():
 
 
 def encoderISR():
-	encoder1.isr()
+	threading.Thread(target=encoder1.isr).start()
 	
 
 def haltISR(haltCode, hardExit):
@@ -142,8 +142,6 @@ def haltISR(haltCode, hardExit):
 	Device.close(INTB_PIN)
 	motor1.haltMotor(haltCode, hardExit)
 
-def threadSetup():
-	threading.Thread(target=encoderISR).start
 
 def IR_RUN_STATE():
 	if not encoder1.isEncoderRunning():
@@ -170,7 +168,7 @@ rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
 btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 lls.when_pressed = left_ls
 rls.when_pressed = right_ls
-intb_pin.when_pressed = threadSetup
+intb_pin.when_pressed = encoderISR
 
 def main():
 	try:
