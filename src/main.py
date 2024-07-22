@@ -86,6 +86,9 @@ def left_ls():
 		return
 	encoder1.setIRSLock(False)
 
+def moveUntilCondition(condition, steps, direction, speed, flag):
+    while not condition():
+        motor1.moveMotor(steps, direction, speed, flag)
 
 def calibrateTrack():
 	encoder1.setIRSLock(True)
@@ -99,24 +102,20 @@ def calibrateTrack():
 	tempHome = 0
 	tempEnd = None
 
-	while not (rlsFirstCalibration):
-		motor1.moveMotor(1, True, 80, False)
+	moveUntilCondition(lambda: rlsFirstCalibration, 1, True, 80, False)
 	motor1.moveMotor(500, False, 5, False)
 	rlsLockOut = False
 
-	while not (rlsSecondCalibration):
-		motor1.moveMotor(1, True, .001, False)
+	moveUntilCondition(lambda: rlsSecondCalibration, 1, True, 0.001, False)
 	motor1.moveMotor(20, True, 1, False)
 	rlsLockOut = False
 	motor1.overWriteCurrentPosition(tempHome)
 
-	while not (llsFirstCalibration):
-		motor1.moveMotor(1, False, 80, True)
+	moveUntilCondition(lambda: llsFirstCalibration, 1, False, 80, True)
 	motor1.moveMotor(500, True, 5, True)
 	llsLockOut = False
 
-	while not (llsSecondCalibration):
-		motor1.moveMotor(1, False, .001, True)
+	moveUntilCondition(lambda: llsSecondCalibration, 1, False, 0.001, True)
 	motor1.moveMotor(20, True, 1, True)
 	llsLockOut = False
 	tempEnd = motor1.getCurrentPosition()
@@ -147,16 +146,7 @@ def haltISR(haltCode, hardExit):
 	motor1.haltMotor(haltCode, hardExit)
 
 def threadSetup():
-	threading.Thread(encoderISR).start
-
-
-#Setting Interrupts
-llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
-rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
-btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
-lls.when_pressed = left_ls
-rls.when_pressed = right_ls
-intb_pin.when_pressed = threadSetup
+	threading.Thread(target=encoderISR).start
 
 def IR_RUN_STATE():
 	if not encoder1.isEncoderRunning():
@@ -177,6 +167,14 @@ def IR_RUN_STATE():
 		motor1.setPower(encoder1.getSpeed())
 		#motor1.setPower(testingSpeed)
 
+
+#Setting Interrupts
+llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
+rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
+btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
+lls.when_pressed = left_ls
+rls.when_pressed = right_ls
+intb_pin.when_pressed = threadSetup
 
 def main():
 	global encoderRunningFlag, tempDir
