@@ -96,6 +96,8 @@ class rsiEncoder:
   def __checkEncoderRunning(self):
     if self.getSpeed() == 0:
       self.encoderRunning = False
+    else:
+      self.encoderRunning = True
 
   def isEncoderRunning(self):
     return self.encoderRunning

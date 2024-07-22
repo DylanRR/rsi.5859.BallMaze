@@ -133,10 +133,7 @@ def initializeEncoderInterrupts():
 	mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
 
-encoderRunningFlag = False
 def encoderISR():
-	global encoderRunningFlag
-	print("ISR Triggered")
 	encoder1.isr()
 	
 
@@ -153,8 +150,7 @@ def IR_RUN_STATE():
 		return
 	
 	direction = encoder1.getDirection()
-	speed = encoder1.getSpeed()
-	testingSpeed = 20
+	#speed = encoder1.getSpeed()
 	position = motor1.getCurrentPosition()
 	step_goal = None
 	if direction:
@@ -162,10 +158,10 @@ def IR_RUN_STATE():
 	else:
 		step_goal = motor1.getEndPosition() - position
 	
-	motor1.moveMotor(step_goal, direction, speed)
+	motor1.moveMotor(step_goal, direction, 15) #Use 15 just to start off the motor, the speed will be updated below
 	while encoder1.isEncoderRunning():
 		motor1.setPower(encoder1.getSpeed())
-		#motor1.setPower(testingSpeed)
+	motor1.setPower(0)
 
 
 #Setting Interrupts
@@ -177,7 +173,6 @@ rls.when_pressed = right_ls
 intb_pin.when_pressed = threadSetup
 
 def main():
-	global encoderRunningFlag, tempDir
 	try:
 		calibrateTrack()
 		sleep(3)
