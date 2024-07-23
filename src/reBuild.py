@@ -66,6 +66,9 @@ def moveUntilCondition(condition, steps, direction, speed, flag):
   while not condition():
     motor1.moveMotor(steps, direction, speed, flag)
 
+def moveToCenter():
+  motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
+
 def calibrateTrack():
 	encoder1.setIRSLock(True)
 	tempHome = 0
@@ -94,7 +97,22 @@ def calibrateTrack():
 	encoder1.setIRSLock(False)
 	
 def IR_RUN_STATE():
-  pass
+	if encoder1.isEncoderRunning():
+		if motor1.isMotorMoving():
+			if (time.time - encoder1.getLastTrigger()) > encoder1.getTimeout():
+				encoder1.isr()
+				motor1.setPower(0)
+			else:
+				motor1.setPower(encoder1.getSpeed())
+		else:
+			if motor1.getDirection():
+				motor1.moveMotor(motor1.getCurrentPosition, True, 20)
+			else:
+				tempStepGoal = motor1.getTrackSteps() - motor1.getCurrentPosition()
+				motor1.moveMotor(tempStepGoal, False, 20)
+	else:
+		motor1.setPower(0)  # Not sure if this is needed
+
 
 
 
@@ -111,7 +129,10 @@ btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 
 def main():
 	try:
-		pass
+		initializeEncoderInterrupts()
+		calibrateTrack()
+		while True:
+			IR_RUN_STATE()
 	except Exception as e:
 		print(f"Error: {e}")
 		motor1.haltMotor("Internal Error", True)

@@ -18,7 +18,8 @@ class rsiStepMotor:
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.0001
     self.__internalMinDelay = 0.001
-    self.encoderRunning = False
+    self.__motorMoving = False
+    self.__exitMove = False
 
   def calibrateTrack(self, homePosition, endPosition):
     self.__homePosition = homePosition
@@ -57,6 +58,9 @@ class rsiStepMotor:
     self.__currentRampPower = 0
     self.setPower(self.__power)
 
+  def getDirection(self):
+    return self.__direction
+
   def setDirection(self, clockwise): #True=Right (Clockwise), False=Left (Counter Clockwise)
     if self.__direction != clockwise:
       self.resetRamping()
@@ -70,10 +74,15 @@ class rsiStepMotor:
 
   def setPower(self, power, rampPower=True):
     # Constrain power to be between 1 and 100
-    constrained_power = max(1, min(power, 100))
+    constrained_power = max(0, min(power, 100))
 
     # Check if there is a change in power; if not, return
     if constrained_power == self.__power:
+      return
+
+    # Check for power of 0
+    if constrained_power == 0:
+      self.__power = 0
       return
 
     # Check if rampPower is True
@@ -126,16 +135,20 @@ class rsiStepMotor:
 
   def __checkForExit(self):
     if self.__power == 0:
-      self.encoderRunning = False
+      self.__exitMove = True
       self.resetRamping()
+
+  def isMotorMoving(self):
+    return self.__motorMoving
       
 
   def moveMotor(self, steps, clockwise, power=50, trackPos=True, overRideRamp=False):
     self.setDirection(clockwise)
     self.setPower(power, not overRideRamp)
-    self.encoderRunning = True
+    self.__motorMoving = True
+    self.__exitMove = False
     for i in range(steps):
-      if not self.encoderRunning:
+      if self.__exitMove:
         break
       self.__mStep.on()
       sleep(self.__stepDelay)
@@ -145,5 +158,7 @@ class rsiStepMotor:
         self.__currentPosition += -1 if clockwise else 1
       self.__updatePower()
       self.__checkForExit()
+    self.__exitMove = False
+    self.__motorMoving = True
 
   

@@ -98,6 +98,10 @@ class rsiEncoder:
       
     timeDiff = (time.time() * 1000) - (self.__lastTrigger * 1000)
 
+    if timeDiff > self.__encoderTimeout:
+      self.__encoderSpeed = 0
+      return
+    
     # Dictionary mapping time thresholds to speeds
     speed_map = {
       15: 0,
@@ -120,12 +124,6 @@ class rsiEncoder:
 
     self.__lastTrigger = time.time()
 
-  def __checkEncoderRunning(self):
-    if self.getSpeed() == 0:
-      self.encoderRunning = False
-    else:
-      self.encoderRunning = True
-
   def isEncoderRunning(self):
     return self.encoderRunning
 
@@ -145,11 +143,9 @@ class rsiEncoder:
 
 
   def isr(self):
-    #if self.__IRS_LOCK:
-    # return
+    if self.__IRS_LOCK:
+     return
     self.__updateEncoderDirection()
     self.__updateSpeed()
-    self.__checkEncoderRunning()
-    print(f"Speed: {self.__encoderSpeed}")
     #self.__testPrint()
     
