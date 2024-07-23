@@ -8,12 +8,12 @@ import threading
 
 class rsiEncoder:
   def __init__(self, A_PIN, B_PIN):
-    self.encoderA = Button(A_PIN, pull_up=True)
-    self.encoderB = Button(B_PIN, pull_up=True)
+    self.encoderA = Button(A_PIN, pull_up=False, bounce_time=0.15)
+    self.encoderB = Button(B_PIN, pull_up=False, bounce_time=0.15)
     self.__direction = None   # True for CW, False for CCW
     self.__flipDirection = None
     self.__directionCount = 0
-    self.__directionDelta = 3
+    self.__directionDelta = 5
     self.__prev_encoderA_val = 0
     self.__prev_encoderB_val = 0
     self.__IRS_LOCK = False
@@ -40,8 +40,8 @@ class rsiEncoder:
     self.__IRS_LOCK = lock
 
   def __updateEncoderDirection(self):
-    current_encoderA = self.encoderA.value
-    current_encoderB = self.encoderB.value
+    current_encoderA = ~self.encoderA.value
+    current_encoderB = ~self.encoderB.value
     isCW = None
     # Determine the direction based on the change of state
     if self.__prev_encoderA_val == 0 and self.__prev_encoderB_val == 0:
@@ -144,5 +144,5 @@ class rsiEncoder:
      return
     self.__updateEncoderDirection()
     self.__updateSpeed()
-    #self.__testPrint()
+    self.__testPrint()
     

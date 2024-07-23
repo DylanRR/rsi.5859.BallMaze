@@ -1,2 +1,3 @@
 venv/*
 raspi-blinka.py
+src/__pycache__/rsiEncoder.cpython-311.pyc
