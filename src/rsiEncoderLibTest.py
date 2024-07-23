@@ -1,5 +1,7 @@
-from rsiEncoder import rsiEncoder
+#from rsiEncoder import rsiEncoder
+from encoderv2 import Encoder
 import time
+
 
 
 ENCODER_A_PIN = 5
@@ -7,7 +9,8 @@ ENCODER_B_PIN = 6
 
 
 # Setup the encoder
-encoder1 = rsiEncoder(ENCODER_A_PIN, ENCODER_B_PIN)
+#encoder1 = rsiEncoder(ENCODER_A_PIN, ENCODER_B_PIN)
+encoder2 = Encoder(ENCODER_A_PIN, ENCODER_B_PIN)
 
 """
 while True:
@@ -20,7 +23,8 @@ while True:
     print("Timeout")
 """
 while True:
-  print(f"Encoder Direction: {encoder1.getEncoderDirection()} Encoder Speed: {encoder1.getEncoderSpeed()}")
+  #print(f"Encoder Direction: {encoder1.getEncoderDirection()} Encoder Speed: {encoder1.getEncoderSpeed()}")
+  print(f"Encoder Count: {encoder2.getValue()} Encoder Direction: {encoder2.direction}")
   time.sleep(.1)
   
 # Keep the script running
