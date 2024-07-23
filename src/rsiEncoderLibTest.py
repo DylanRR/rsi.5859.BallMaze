@@ -20,9 +20,8 @@ while True:
     print("Timeout")
 """
 while True:
-  print(f"Encoder Direction: {encoder1.getEncoderDirection()}")
-  print(f"Encoder Speed: {encoder1.getEncoderSpeed()}")
-  time.sleep(1)
+  print(f"Encoder Direction: {encoder1.getEncoderDirection()} Encoder Speed: {encoder1.getEncoderSpeed()}")
+  time.sleep(.1)
   
 # Keep the script running
 input("Press enter to quit\n\n")
