@@ -2,7 +2,7 @@ from gpiozero import Button, OutputDevice, Device
 from time import sleep
 import os
 from rsiStepMotor import rsiStepMotor
-from limitSwitch import limitSwitch
+from mcpControl import mcpInputInterruptPin, mcpOutputPin
 from rsiEncoder import rsiEncoder
 from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
@@ -35,9 +35,6 @@ rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
 intb_pin = Button(INTB_PIN, pull_up=True)
 
-# Initialize Motor
-motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN)
-
 # Initialize I2C bus and MCP23017
 i2c = busio.I2C(board.SCL, board.SDA)
 mcp = MCP23017(i2c, address=0x20)
@@ -46,16 +43,17 @@ mcp = MCP23017(i2c, address=0x20)
 encoder1 = rsiEncoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN, mcp)
 
 # Initialize Limit Switches
-leftSwitch = limitSwitch(LEFT_INITIAL_LIMIT_SWITCH, [encoder1])
-rightSwitch = limitSwitch(RIGHT_INITIAL_LIMIT_SWITCH, [encoder1])
+leftSwitch = mcpInputInterruptPin(LEFT_INITIAL_LIMIT_SWITCH, mcp)
+rightSwitch = mcpInputInterruptPin(RIGHT_INITIAL_LIMIT_SWITCH, mcp)
 
-def initializeEncoderInterrupts():
-	mcp.interrupt_enable = 0xFFFF
-	mcp.interrupt_configuration = 0x0000  # interrupt on any change
-	mcp.io_control = 0x44  # Interrupt as open drain and mirrored
-	mcp.clear_ints()  # Interrupts need to be cleared initially
-	# Configure interrupts to trigger on a change
-	mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
+
+# Initialize Motor
+motor1 = rsiStepMotor(STEP_PIN, ENABLE_PIN, DIRECTION_PIN, mcp)
+
+
+mcp.io_control = 0x44  # Interrupt as open drain and mirrored
+mcp.clear_ints()  # Interrupts need to be cleared initially
+mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
 def haltISR(haltCode, hardExit):
 	encoder1.setIRSLock(True)
@@ -113,15 +111,11 @@ def IR_RUN_STATE():
 	else:
 		motor1.setPower(0)  # Not sure if this is needed
 
+def mcp_ISR():
+  leftSwitch.handle_interrupt()
+  rightSwitch.handle_interrupt()
 
-
-
-
-def encoderISR():
-	threading.Thread(target=encoder1.isr).start()
-
-intb_pin.when_pressed = encoderISR
-	
+intb_pin.when_pressed = mcp_ISR
 llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
 rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
 btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
@@ -129,10 +123,10 @@ btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 
 def main():
 	try:
-		initializeEncoderInterrupts()
-		calibrateTrack()
+		#calibrateTrack()
 		while True:
-			IR_RUN_STATE()
+			pass
+			#IR_RUN_STATE()
 	except Exception as e:
 		print(f"Error: {e}")
 		motor1.haltMotor("Internal Error", True)

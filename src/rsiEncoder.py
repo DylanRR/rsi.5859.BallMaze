@@ -1,20 +1,15 @@
 from gpiozero import Button
-from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
 import busio
 from digitalio import Direction, Pull
 import digitalio
 import time
+import threading
 
 class rsiEncoder:
-  def __init__(self, A_PIN, B_PIN, mcpObj):
-    self.aPin = A_PIN
-    self.bPin = B_PIN
-    # Setup MCP23017 pins for the encoder
-    self.__mcpObj = mcpObj
-    self.encoderA = self.__mcpObj.get_pin(self.aPin)
-    self.encoderB = self.__mcpObj.get_pin(self.bPin)
-    self.__setupEncoderPins()
+  def __init__(self, A_PIN, B_PIN):
+    self.encoderA = Button(A_PIN, pull_up=True)
+    self.encoderB = Button(B_PIN, pull_up=True)
     self.__direction = None   # True for CW, False for CCW
     self.__flipDirection = None
     self.__directionCount = 0
@@ -22,19 +17,21 @@ class rsiEncoder:
     self.__prev_encoderA_val = 0
     self.__prev_encoderB_val = 0
     self.__IRS_LOCK = False
-    self.__speedRanges = [80, 60, 40, 20, 0]
 
     self.__lastTrigger = None
     self.__encoderSpeed = 0
     self.__encoderTimeout = 250 # 250ms Default timeout
     self.encoderRunning = False
-    
 
-  def __setupEncoderPins(self):
-    self.encoderA.direction = Direction.INPUT
-    self.encoderA.pull = digitalio.Pull.UP
-    self.encoderB.direction = Direction.INPUT
-    self.encoderB.pull = digitalio.Pull.UP
+    #Create a thread to run the ISR
+    self.__interrupt_thread = threading.Thread(target=self._wait_for_interrupt)
+    self.__interrupt_thread.daemon = True
+    self.__interrupt_thread.start()
+
+  def _wait_for_interrupt(self):
+    while True:
+      if self.encoderA.is_pressed or self.encoderB.is_pressed:
+        self.isr()
 
   def getEncoderDirection(self):
     return self.__direction # True for CW, False for CCW

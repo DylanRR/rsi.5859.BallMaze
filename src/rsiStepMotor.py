@@ -1,18 +1,25 @@
 from gpiozero import OutputDevice
+from adafruit_mcp230xx.mcp23017 import MCP23017
 from time import sleep
 import os
+import digitalio
 
 class rsiStepMotor:
-  def __init__(self, stepPin, dirPin, enablePin):
+  def __init__(self, stepPin, dirPin, enablePin, mcpObj: MCP23017):
+    self.__mcpObj = mcpObj
     self.__power = 0
     self.__currentPosition = 0
     self.__homePosition = 0
     self.__endPosition = None
     self.__trackSteps = None
     self.__direction = None    # True = Clockwise, False = Counter Clockwise
+
     self.__mStep = OutputDevice(stepPin)
-    self.__mDir = OutputDevice(dirPin)
-    self.__mEnable = OutputDevice(enablePin)
+
+    self.__mDir =  None
+    self.__mEnable = None
+    self.__setupMCPPins(dirPin, enablePin)
+
     self.__stepDelay = 0.01
     self.__rampingPower = None
     self.__currentRampPower = 0
@@ -20,6 +27,15 @@ class rsiStepMotor:
     self.__internalMinDelay = 0.001
     self.__motorMoving = False
     self.__exitMove = False
+
+  def __setupMCPPins(self, dirPin, enablePin):
+    self.__mDir =  self.__mcpObj.get_pin(dirPin)
+    self.__mDir.direction = False
+    self.__mDir.pull = digitalio.Pull.UP
+    self.__mEnable = self.__mcpObj.get_pin(enablePin)
+    self.__mEnable.direction = False
+    self.__mEnable.pull = digitalio.Pull.UP
+    
 
   def calibrateTrack(self, homePosition, endPosition):
     self.__homePosition = homePosition
@@ -42,10 +58,10 @@ class rsiStepMotor:
     return self.__currentPosition
   
   def enableMotor(self):
-    self.__mEnable.off()
+    self.__mEnable.value = False
   
   def disableMotor(self):
-    self.__mEnable.on()
+    self.__mEnable.value = True
 
   def haltMotor(self, message="Internal Halt", hardExit=True):
     self.disableMotor()
