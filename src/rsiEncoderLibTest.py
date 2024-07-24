@@ -10,7 +10,7 @@ ENCODER_B_PIN = 6
 
 # Setup the encoder
 #encoder1 = rsiEncoder(ENCODER_A_PIN, ENCODER_B_PIN)
-encoder2 = Encoder(ENCODER_A_PIN, ENCODER_B_PIN)
+
 
 
 """
@@ -23,6 +23,13 @@ while True:
   if tempTime > encoder1.getTimeout():
     print("Timeout")
 """
+
+timeout = 0.4
+minSpeedDelta = 0.06
+maxSpeedDelta = 0.001
+numOfSpeedSamples = 8000
+
+encoder2 = Encoder(ENCODER_A_PIN, ENCODER_B_PIN)
 
 while True:
   #print(f"Encoder Direction: {encoder1.getEncoderDirection()} Encoder Speed: {encoder1.getEncoderSpeed()}")

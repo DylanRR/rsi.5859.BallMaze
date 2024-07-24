@@ -3,7 +3,6 @@ import threading
 import time
 
 class Encoder:
-
   def __init__(self, leftPin, rightPin):
     self.__running = True
     self.__leftPin = Button(leftPin)
@@ -12,16 +11,15 @@ class Encoder:
     self.__state = '00'
     self.direction = None
     self.__lastChangeTime = time.time()
-    self.__timeout = 0.5
+    self.__timeout = 0.4
     self.__speed = 0
-    self.__minSpeedDelta = 0.19994723805177816
-    self.__maxSpeedDelta = 0.0051852862040201825
+    self.__minSpeedDelta = 0.08
+    self.__maxSpeedDelta = 0.001
     self.__speedSamples = []
-    self.__numOfSpeedSamples = 6000
+    self.__numOfSpeedSamples = 10000
     
     self.__ISR_LOCK = threading.Lock()                                          # Initialize the lock for thread synchronization
     self.__interrupt_thread = threading.Thread(target=self._wait_for_interrupt) # Create a thread to run the ISR
-    #self.__interrupt_thread.daemon = True                                       # Set the thread as a daemon thread
     self.__interrupt_thread.start()                                             # Start the thread
 
   def __del__(self):
@@ -76,40 +74,33 @@ class Encoder:
     if (time.time() - self.__lastChangeTime) > self.__timeout:
       self.direction = None
       self.__value = 0
-      self.__speed = 0
       self.__speedSamples.clear()
 
   def __calcSpeed(self):
-    # Calculate the time difference since the last change
     timeDiff = time.time() - self.__lastChangeTime
-    
-    # Normalize the time difference to a value between 0 and 1
-    normalized_timeDiff = (timeDiff - self.__minSpeedDelta) / (self.__maxSpeedDelta - self.__minSpeedDelta)
-    normalized_timeDiff = max(0, min(normalized_timeDiff, 1))  # Clamping to ensure it stays within bounds
+    if timeDiff < self.__timeout:
+      # Calculate a normalized time difference within the operational range
+      normalized_timeDiff = (timeDiff - self.__minSpeedDelta) / (self.__maxSpeedDelta - self.__minSpeedDelta)
+      normalized_timeDiff = max(0, min(normalized_timeDiff, 1))  # Ensure it's between 0 and 1
 
-    # Calculate temporary speed based on the normalized time difference
-    # The formula is designed to increase the speed as the time difference increases
-    tempSpeed = round(1 + (99 * normalized_timeDiff))  # Speed calculation adjusted to be within 1 to 100
-    tempSpeed = max(1, min(tempSpeed, 100))  # Clamping to ensure speed is within 1 to 100
-
-    # Add the calculated speed to the samples list
-    self.__speedSamples.append(tempSpeed)
-    
-    # If the number of samples exceeds the specified limit, calculate the average speed
-    if len(self.__speedSamples) > self.__numOfSpeedSamples:
-      avg = sum(self.__speedSamples) / len(self.__speedSamples)  # Calculate average of speed samples
-      avg = round(avg)  # Round the average to the nearest integer
-      avg = max(1, min(avg, 100))  # Clamp the average speed to be within 1 to 100
-      self.__speed = avg  # Update the current speed with the calculated average
-      self.__speedSamples.pop(0)  # Remove the oldest speed sample
-
-    # Check for timeout condition (not shown in the selected code)
-    self.__checkTimeout()
-    
-        
+      # Invert the formula to increase speed value as normalized_timeDiff increases
+      tempSpeed = round(1 + (99 * normalized_timeDiff))  # Adjusted formula
+      tempSpeed = max(1, min(tempSpeed, 100))  # Ensure speed is within the expected range
+  
+      self.__speedSamples.append(tempSpeed)
+      if len(self.__speedSamples) > self.__numOfSpeedSamples:
+        avg = sum(self.__speedSamples) / len(self.__speedSamples)
+        avg = round(avg)
+        avg = max(1, min(avg, 100))
+        self.__speed = avg
+        self.__speedSamples.clear()
+    else:
+      self.__speed = 0
+      self.__speedSamples.clear()
     
 
   def getSpeed(self):
+    self.__checkTimeout()
     return self.__speed
 
   def getValue(self):
