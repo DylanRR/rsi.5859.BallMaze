@@ -1,36 +1,9 @@
-#from rsiEncoder import rsiEncoder
 from encoderv2 import Encoder
 import time
-
-
 
 ENCODER_A_PIN = 5
 ENCODER_B_PIN = 6
 
-
-# Setup the encoder
-#encoder1 = rsiEncoder(ENCODER_A_PIN, ENCODER_B_PIN)
-encoder2 = Encoder(ENCODER_A_PIN, ENCODER_B_PIN)
-
-
-"""
-while True:
-  last_trigger_time = encoder1.getLastTrigger()
-  if last_trigger_time is None:
-    last_trigger_time = time.time()  # Use current time as fallback
-
-  tempTime = (time.time() - last_trigger_time) * 1000
-  if tempTime > encoder1.getTimeout():
-    print("Timeout")
-"""
-
-while True:
-  #print(f"Encoder Direction: {encoder1.getEncoderDirection()} Encoder Speed: {encoder1.getEncoderSpeed()}")
-  print(f"Encoder Speed: {encoder2.getSpeed()}")
-  time.sleep(.1)
-
-
-"""
 encoder = Encoder(ENCODER_A_PIN, ENCODER_B_PIN)
 print("Start Spinninng at your fastest speed.")
 time.sleep(1)
@@ -70,4 +43,3 @@ encoder.close()
 
 
 
-"""
