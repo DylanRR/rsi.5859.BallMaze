@@ -33,7 +33,8 @@ encoder2 = Encoder(ENCODER_A_PIN, ENCODER_B_PIN)
 
 while True:
   #print(f"Encoder Direction: {encoder1.getEncoderDirection()} Encoder Speed: {encoder1.getEncoderSpeed()}")
-  print(f"Encoder Speed: {encoder2.getSpeed()}")
+  #print(f"Encoder Speed: {encoder2.getSpeed()}")
+  print(encoder2.isEncoderRunning())
   time.sleep(.1)
 
 

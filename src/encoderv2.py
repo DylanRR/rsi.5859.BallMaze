@@ -18,7 +18,8 @@ class Encoder:
     self.__speedSamples = []
     self.__numOfSpeedSamples = 10000
     
-    self.__ISR_LOCK = threading.Lock()                                          # Initialize the lock for thread synchronization
+    self.__ISR_LOCK = False
+    self.THREAD_LOCK = threading.Lock()                                         # Initialize the lock for thread synchronization
     self.__interrupt_thread = threading.Thread(target=self._wait_for_interrupt) # Create a thread to run the ISR
     self.__interrupt_thread.start()                                             # Start the thread
 
@@ -35,8 +36,12 @@ class Encoder:
   def _wait_for_interrupt(self):
     while self.__running:
       if self.__leftPin.is_pressed or self.__rightPin.is_pressed:
-        with self.__ISR_LOCK:
-          self.ISR()
+        with self.THREAD_LOCK:
+          if not self.__ISR_LOCK:
+            self.ISR()
+
+  def ISR_LOCK(self, value):
+    self.__ISR_LOCK = value
 
   def ISR(self):
     p1 = self.__leftPin.is_pressed                                               # Get the current left pin value
@@ -74,6 +79,7 @@ class Encoder:
     if (time.time() - self.__lastChangeTime) > self.__timeout:
       self.direction = None
       self.__value = 0
+      self.__speed = 0
       self.__speedSamples.clear()
 
   def __calcSpeed(self):
@@ -102,7 +108,14 @@ class Encoder:
   def getSpeed(self):
     self.__checkTimeout()
     return self.__speed
+  
+  def isEncoderRunning(self):
+    self.__checkTimeout()
+    return True if self.direction is not None else False
 
   def getValue(self):
     self.__checkTimeout()
     return self.__value
+  
+  def hasDirChanged(self, dirValue) -> bool:
+    return False if dirValue == self.direction else True

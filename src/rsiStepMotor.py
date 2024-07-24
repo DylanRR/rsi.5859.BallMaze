@@ -99,6 +99,7 @@ class rsiStepMotor:
     # Check for power of 0
     if constrained_power == 0:
       self.__power = 0
+      self.__checkForExit()
       return
 
     # Check if rampPower is True

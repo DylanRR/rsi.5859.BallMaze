@@ -3,7 +3,7 @@ from time import sleep
 import os
 from rsiStepMotor import rsiStepMotor
 from mcpControl import mcpInputInterruptPin, mcpOutputPin
-from rsiEncoder import rsiEncoder
+from encoderv2 import Encoder
 from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
 import busio
@@ -40,7 +40,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 mcp = MCP23017(i2c, address=0x20)
 
 # Initialize Encoder
-encoder1 = rsiEncoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN, mcp)
+encoder1 = Encoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN)
 
 # Initialize Limit Switches
 leftSwitch = mcpInputInterruptPin(LEFT_INITIAL_LIMIT_SWITCH, mcp)
@@ -68,7 +68,7 @@ def moveToCenter():
   motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
 
 def calibrateTrack():
-	encoder1.setIRSLock(True)
+	encoder1.ISR_LOCK(True)
 	tempHome = 0
 	tempEnd = None
 
@@ -91,23 +91,35 @@ def calibrateTrack():
 	tempEnd = motor1.getCurrentPosition()
 
 	motor1.calibrateTrack(tempHome, tempEnd)
+	moveToCenter()
 	print("Calibration Complete....")
-	encoder1.setIRSLock(False)
-	
+	encoder1.ISR_LOCK(False)
+
+def dirChange():
+	if motor1.getDirection():
+		motor1.moveMotor(motor1.getCurrentPosition, True, 20)
+	else:
+		tempStepGoal = motor1.getTrackSteps() - motor1.getCurrentPosition()
+		motor1.moveMotor(tempStepGoal, False, 20)
+
+def mMoveNoDirChange():
+	tSpeed = encoder1.getSpeed()
+	if not tSpeed == 0:
+		motor1.setPower(encoder1.getSpeed())
+
+lastKnownDir = None
 def IR_RUN_STATE():
+	global lastKnownDir
 	if encoder1.isEncoderRunning():
 		if motor1.isMotorMoving():
-			if (time.time - encoder1.getLastTrigger()) > encoder1.getTimeout():
-				encoder1.isr()
-				motor1.setPower(0)
+			if not encoder1.hasDirChanged(lastKnownDir):
+				mMoveNoDirChange()
 			else:
-				motor1.setPower(encoder1.getSpeed())
+				motor1.setPower(0)  # Not sure if this is needed
+				sleep(.1)
+				dirChange()
 		else:
-			if motor1.getDirection():
-				motor1.moveMotor(motor1.getCurrentPosition, True, 20)
-			else:
-				tempStepGoal = motor1.getTrackSteps() - motor1.getCurrentPosition()
-				motor1.moveMotor(tempStepGoal, False, 20)
+			dirChange()
 	else:
 		motor1.setPower(0)  # Not sure if this is needed
 
