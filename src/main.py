@@ -35,12 +35,12 @@ lls = Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True)
 rls = Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True)
 intb_pin = Button(INTB_PIN, pull_up=True)
 
-# Initialize Motor
-motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN)
-
 # Initialize I2C bus and MCP23017
 i2c = busio.I2C(board.SCL, board.SDA)
 mcp = MCP23017(i2c, address=0x20)
+
+# Initialize Motor
+motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN, mcp)
 
 # Initialize Encoder
 encoder1 = rsiEncoder(MCP_ENCODER_A_PIN, MCP_ENCODER_B_PIN, mcp)

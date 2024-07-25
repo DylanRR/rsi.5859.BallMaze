@@ -6,10 +6,12 @@ class mcpInputInterruptPin:
   def __init__(self, pin, mcpObj: MCP23017, pull_up=digitalio.Pull.UP ,direction=digitalio.Direction.INPUT):
     self.pin = pin
     self.__mcpObj = mcpObj
+    # Enable interrupt for the specific pin without overwriting other settings
+    current_interrupts = self.__mcpObj.interrupt_enable
+    self.__mcpObj.interrupt_enable = current_interrupts | (1 << self.pin)
     self.__switch = self.__mcpObj.get_pin(pin)
     self.__switch.direction = direction
     self.__switch.pull = pull_up
-    self.__mcpObj.interrupt_enable = 1 << self.pin
     self.__lockedOut = False
     self.__firstCalibration = False
     self.__secondCalibration = False
@@ -22,16 +24,20 @@ class mcpInputInterruptPin:
   def nonCalISR(self):
     pass  # Placeholder for the non-calibration ISR
 
-  def __irs(self):
+  def __isr(self):
+    print(f"ISR running on Pin {self.pin}")
     if self.__lockedOut:
       return
+    print("ISR not locked out")
 
     if not self.__firstCalibration:
+      print("First Calibration")
       self.__firstCalibration = True
       self.__lockedOut = True
       return
 
     if not self.__secondCalibration:
+      print("Second Calibration")
       self.__secondCalibration = True
       self.__lockedOut = True
       return
@@ -48,10 +54,7 @@ class mcpInputInterruptPin:
     self.__lockedOut = lock
 
   def handle_interrupt(self):
-    flag = self.__mcpObj.interrupt_flag
-    if flag & (1 << self.pin):
-      self.__irs()
-      self.__mcpObj.clear_ints()  # Clear the interrupt flag
+    self.__isr()
 
 class mcpOutputPin:
   def __init__(self, pin, mcpObj: MCP23017, pull_up=False):

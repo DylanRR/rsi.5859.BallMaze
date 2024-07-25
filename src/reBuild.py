@@ -11,21 +11,21 @@ import threading
 import time
 
 # Define GPIO pin numbers
-DIRECTION_PIN = 21
-STEP_PIN = 16
-ENABLE_PIN = 20
-HALT_PIN = 4
+DIRECTION_PIN = 7 # MCP Pin
+STEP_PIN = 16			# Pi Pin
+ENABLE_PIN = 6		# MCP Pin
+HALT_PIN = 4			# Pi Pin
 
 # Define Encoder pins
-MCP_ENCODER_A_PIN = 8
-MCP_ENCODER_B_PIN = 9
-INTB_PIN = 12
+MCP_ENCODER_A_PIN = 5	# Pi Pin
+MCP_ENCODER_B_PIN = 6	# Pi Pin
+INTA_PIN = 12					# Pi Pin
 
 # Define Limit Switch pins
-LEFT_INITIAL_LIMIT_SWITCH = 18
-LEFT_SECONDARY_LIMIT_SWITCH = 23
-RIGHT_SECONDARY_LIMIT_SWITCH = 24
-RIGHT_INITIAL_LIMIT_SWITCH = 25
+LEFT_INITIAL_LIMIT_SWITCH = 5			# MCP Pin
+LEFT_SECONDARY_LIMIT_SWITCH = 23	# Pi Pin
+RIGHT_SECONDARY_LIMIT_SWITCH = 24	# Pi Pin
+RIGHT_INITIAL_LIMIT_SWITCH = 4		# MCP Pin
 
 
 
@@ -33,7 +33,7 @@ RIGHT_INITIAL_LIMIT_SWITCH = 25
 llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
-intb_pin = Button(INTB_PIN, pull_up=True)
+intA_pin = Button(INTA_PIN)
 
 # Initialize I2C bus and MCP23017
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -56,8 +56,8 @@ mcp.clear_ints()  # Interrupts need to be cleared initially
 mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
 def haltISR(haltCode, hardExit):
-	encoder1.setIRSLock(True)
-	Device.close(INTB_PIN)
+	encoder1.ISR_LOCK(True)
+	Device.close(INTA_PIN)
 	motor1.haltMotor(haltCode, hardExit)
 
 def moveUntilCondition(condition, steps, direction, speed, flag):
@@ -68,9 +68,13 @@ def moveToCenter():
   motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
 
 def calibrateTrack():
+	print("Entered Calibration Mode....")
 	encoder1.ISR_LOCK(True)
+	print("Encoder Locked")
 	tempHome = 0
 	tempEnd = None
+
+	motor1.enableMotor()
 
 	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 80, False)
 	motor1.moveMotor(500, False, 5, False)
@@ -124,10 +128,24 @@ def IR_RUN_STATE():
 		motor1.setPower(0)  # Not sure if this is needed
 
 def mcp_ISR():
-  leftSwitch.handle_interrupt()
-  rightSwitch.handle_interrupt()
+    initFlagA = mcp.int_flaga
+    print(f"Interrupt Flag A: {initFlagA}")
+    mcp.clear_inta()
+    print("Interrupt flags cleared")
+    print(f"Flag: {initFlagA[0]}")
+    print(f"Left Switch Pin: {leftSwitch.pin}")
+    print(f"Right Switch Pin: {rightSwitch.pin}")
+    
+    if initFlagA[0] == leftSwitch.pin:
+        print("Handling left switch interrupt")
+        leftSwitch.handle_interrupt()
+    elif initFlagA[0] == rightSwitch.pin:
+        print("Handling right switch interrupt")
+        rightSwitch.handle_interrupt()
+    else:
+        print("No matching interrupt handler found")
 
-intb_pin.when_pressed = mcp_ISR
+intA_pin.when_pressed = mcp_ISR
 llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
 rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
 btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
@@ -135,9 +153,9 @@ btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 
 def main():
 	try:
-		#calibrateTrack()
+		calibrateTrack()
 		while True:
-			pass
+			break
 			#IR_RUN_STATE()
 	except Exception as e:
 		print(f"Error: {e}")

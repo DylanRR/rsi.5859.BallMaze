@@ -1,4 +1,5 @@
 from gpiozero import OutputDevice
+from adafruit_mcp230xx.digital_inout import DigitalInOut, Direction
 from adafruit_mcp230xx.mcp23017 import MCP23017
 from time import sleep
 import os
@@ -30,11 +31,12 @@ class rsiStepMotor:
 
   def __setupMCPPins(self, dirPin, enablePin):
     self.__mDir =  self.__mcpObj.get_pin(dirPin)
-    self.__mDir.direction = False
-    self.__mDir.pull = digitalio.Pull.UP
     self.__mEnable = self.__mcpObj.get_pin(enablePin)
-    self.__mEnable.direction = False
+    self.__mDir.direction = Direction.OUTPUT
+    self.__mEnable.direction = Direction.OUTPUT
+    self.__mDir.pull = digitalio.Pull.UP
     self.__mEnable.pull = digitalio.Pull.UP
+    
     
 
   def calibrateTrack(self, homePosition, endPosition):
