@@ -128,22 +128,23 @@ def IR_RUN_STATE():
 		motor1.setPower(0)  # Not sure if this is needed
 
 def mcp_ISR():
-    initFlagA = mcp.int_flaga
-    print(f"Interrupt Flag A: {initFlagA}")
-    mcp.clear_inta()
-    print("Interrupt flags cleared")
-    print(f"Flag: {initFlagA[0]}")
-    print(f"Left Switch Pin: {leftSwitch.pin}")
-    print(f"Right Switch Pin: {rightSwitch.pin}")
-    
-    if initFlagA[0] == leftSwitch.pin:
-        print("Handling left switch interrupt")
-        leftSwitch.handle_interrupt()
-    elif initFlagA[0] == rightSwitch.pin:
-        print("Handling right switch interrupt")
-        rightSwitch.handle_interrupt()
-    else:
-        print("No matching interrupt handler found")
+	initFlagA = mcp.int_flaga
+	print(f"Interrupt Flag A: {initFlagA}")
+
+	print(f"Flag: {initFlagA[0]}")
+	print(f"Left Switch Pin: {leftSwitch.pin}")
+	print(f"Right Switch Pin: {rightSwitch.pin}")
+	
+	if initFlagA[0] == leftSwitch.pin:
+		print("Handling left switch interrupt")
+		leftSwitch.handle_interrupt()
+	elif initFlagA[0] == rightSwitch.pin:
+		print("Handling right switch interrupt")
+		rightSwitch.handle_interrupt()
+	else:
+		print("No matching interrupt handler found")
+	mcp.clear_inta()
+	print("Interrupt flags cleared")
 
 intA_pin.when_pressed = mcp_ISR
 llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
