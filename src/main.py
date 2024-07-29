@@ -11,21 +11,21 @@ import threading
 import time
 
 # Define GPIO pin numbers
-DIRECTION_PIN = 21
-STEP_PIN = 16
-ENABLE_PIN = 20
-HALT_PIN = 4
+DIRECTION_PIN = 6    # MCP pin 6
+STEP_PIN = 16				 # Pi GPIO pin 16
+ENABLE_PIN = 7			 # MCP pin 7
+HALT_PIN = 4				 # Pi GPIO pin 4	
 
 # Define Encoder pins
-MCP_ENCODER_A_PIN = 8
-MCP_ENCODER_B_PIN = 9
-INTB_PIN = 12
+MCP_ENCODER_A_PIN = 5	#Pi GPIO pin 5
+MCP_ENCODER_B_PIN = 6 #Pi GPIO pin 6
+INTA_PIN = 12        # Pi GPIO pin 12
 
 # Define Limit Switch pins
-LEFT_INITIAL_LIMIT_SWITCH = 18
-LEFT_SECONDARY_LIMIT_SWITCH = 23
-RIGHT_SECONDARY_LIMIT_SWITCH = 24
-RIGHT_INITIAL_LIMIT_SWITCH = 25
+LEFT_INITIAL_LIMIT_SWITCH = 5   	# MCP pin 5
+LEFT_SECONDARY_LIMIT_SWITCH = 23	# Pi pin 23	
+RIGHT_SECONDARY_LIMIT_SWITCH = 4	# MCP pin 4
+RIGHT_INITIAL_LIMIT_SWITCH = 24		# Pi pin 24
 
 # Initialize GPIO devices
 llsHalt = Button(LEFT_SECONDARY_LIMIT_SWITCH, pull_up=True)
@@ -33,7 +33,7 @@ rlsHalt = Button(RIGHT_SECONDARY_LIMIT_SWITCH, pull_up=True)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
 lls = Button(LEFT_INITIAL_LIMIT_SWITCH, pull_up=True)
 rls = Button(RIGHT_INITIAL_LIMIT_SWITCH, pull_up=True)
-intb_pin = Button(INTB_PIN, pull_up=True)
+intb_pin = Button(INTA_PIN, pull_up=True)
 
 # Initialize I2C bus and MCP23017
 i2c = busio.I2C(board.SCL, board.SDA)

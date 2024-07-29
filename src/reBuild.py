@@ -1,14 +1,11 @@
 from gpiozero import Button, OutputDevice, Device
 from time import sleep
-import os
 from rsiStepMotor import rsiStepMotor
 from mcpControl import mcpInputInterruptPin, mcpOutputPin
 from encoderv2 import Encoder
 from adafruit_mcp230xx.mcp23017 import MCP23017
 import board
 import busio
-import threading
-import time
 
 # Define GPIO pin numbers
 DIRECTION_PIN = 7 # MCP Pin
@@ -50,8 +47,6 @@ rightSwitch = mcpInputInterruptPin(RIGHT_INITIAL_LIMIT_SWITCH, mcp)
 # Initialize Motor
 motor1 = rsiStepMotor(STEP_PIN, ENABLE_PIN, DIRECTION_PIN, mcp)
 
-
-mcp.io_control = 0x44  # Interrupt as open drain and mirrored
 mcp.clear_ints()  # Interrupts need to be cleared initially
 mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
 
@@ -60,9 +55,9 @@ def haltISR(haltCode, hardExit):
 	Device.close(INTA_PIN)
 	motor1.haltMotor(haltCode, hardExit)
 
-def moveUntilCondition(condition, steps, direction, speed, flag):
+def moveUntilCondition(condition, steps, direction, speed, trackPos=True):
   while not condition():
-    motor1.moveMotor(steps, direction, speed, flag)
+    motor1.moveMotor(steps, direction, speed, trackPos)
 
 def moveToCenter():
   motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
@@ -75,7 +70,7 @@ def calibrateTrack():
 	tempEnd = None
 
 	motor1.enableMotor()
-
+	leftSwitch.setLockedOut(True)
 	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 80, False)
 	motor1.moveMotor(500, False, 5, False)
 	rightSwitch.setLockedOut(False)
@@ -85,6 +80,7 @@ def calibrateTrack():
 	rightSwitch.setLockedOut(False)
 	motor1.overWriteCurrentPosition(tempHome)
 
+	leftSwitch.setLockedOut(False)
 	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 80, True)
 	motor1.moveMotor(500, True, 5, True)
 	leftSwitch.setLockedOut(False)
@@ -128,21 +124,23 @@ def IR_RUN_STATE():
 		motor1.setPower(0)  # Not sure if this is needed
 
 def mcp_ISR():
+	print("-------------------Interrupt detected-------------------")
 	initFlagA = mcp.int_flaga
-	print(f"Interrupt Flag A: {initFlagA}")
+	print(f"MCP Interrupt Flag List: {initFlagA}")
 
-	print(f"Flag: {initFlagA[0]}")
-	print(f"Left Switch Pin: {leftSwitch.pin}")
-	print(f"Right Switch Pin: {rightSwitch.pin}")
+	#print(f"Flag at 0: {initFlagA[0]}")
+	#print(f"INFO:Left Switch Pin: {leftSwitch.pin}")
+	#print(f"INFO:Right Switch Pin: {rightSwitch.pin}")
 	
 	if initFlagA[0] == leftSwitch.pin:
-		print("Handling left switch interrupt")
+		print("Handling left switch interrupt (Pin 5)")
 		leftSwitch.handle_interrupt()
 	elif initFlagA[0] == rightSwitch.pin:
-		print("Handling right switch interrupt")
+		print("Handling right switch interrupt (pin 4)")
 		rightSwitch.handle_interrupt()
 	else:
 		print("No matching interrupt handler found")
+
 	mcp.clear_inta()
 	print("Interrupt flags cleared")
 

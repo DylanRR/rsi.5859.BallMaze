@@ -25,19 +25,20 @@ class mcpInputInterruptPin:
     pass  # Placeholder for the non-calibration ISR
 
   def __isr(self):
-    print(f"ISR running on Pin {self.pin}")
+    print(f"Entering ISR for Pin {self.pin}")
     if self.__lockedOut:
       return
-    print("ISR not locked out")
+    
+    print("ISR not locked out...")
 
     if not self.__firstCalibration:
-      print("First Calibration")
+      print("Entering First Calibration...")
       self.__firstCalibration = True
       self.__lockedOut = True
       return
 
     if not self.__secondCalibration:
-      print("Second Calibration")
+      print("Entering Second Calibration...")
       self.__secondCalibration = True
       self.__lockedOut = True
       return
