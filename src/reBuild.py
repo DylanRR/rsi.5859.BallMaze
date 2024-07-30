@@ -55,9 +55,9 @@ def haltISR(haltCode, hardExit):
 	Device.close(INTA_PIN)
 	motor1.haltMotor(haltCode, hardExit)
 
-def moveUntilCondition(condition, steps, direction, speed, trackPos=True):
+def moveUntilCondition(condition, steps, direction, speed, trackPos=True, rampOverride=False):
   while not condition():
-    motor1.moveMotor(steps, direction, speed, trackPos)
+    motor1.moveMotor(steps, direction, speed, trackPos, rampOverride)
 
 def moveToCenter():
   motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
@@ -75,7 +75,7 @@ def calibrateTrack():
 	motor1.moveMotor(500, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
-	moveUntilCondition(lambda: rightSwitch.getSecondCalibration(), 1, True, 0.001, False)
+	moveUntilCondition(lambda: rightSwitch.getSecondCalibration(), 1, True, 0.001, False,)
 	motor1.moveMotor(20, True, 1, False)
 	rightSwitch.setLockedOut(False)
 	motor1.overWriteCurrentPosition(tempHome)
@@ -149,10 +149,14 @@ llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
 rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
 btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 
+def testMove():
+	motor1.enableMotor()
+	motor1.moveMotor(1000, False, .001, False, True)
 
 def main():
 	try:
-		calibrateTrack()
+		testMove()
+		#calibrateTrack()
 		while True:
 			break
 			#IR_RUN_STATE()

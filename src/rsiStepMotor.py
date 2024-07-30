@@ -166,6 +166,7 @@ class rsiStepMotor:
     self.setPower(power, not overRideRamp)
     self.__motorMoving = True
     self.__exitMove = False
+    print(f"Moving Motor {steps} steps in {'Clockwise' if clockwise else 'Counter Clockwise'} power: {power} stepDelay: {self.__stepDelay}")
     for i in range(steps):
       if self.__exitMove:
         break
