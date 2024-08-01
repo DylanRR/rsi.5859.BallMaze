@@ -1,8 +1,18 @@
 from gpiozero import Button
 import threading
+from functools import wraps
 import time
 
 class rsiEncoder:
+
+  def run_in_thread(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+      thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+      thread.start()
+      return thread
+    return wrapper
+
   def __init__(self, A_PIN, B_PIN):
     self.encoderA = Button(A_PIN, pull_up=True, bounce_time=0.01)
     self.encoderB = Button(B_PIN, pull_up=True, bounce_time=0.01)
@@ -18,10 +28,11 @@ class rsiEncoder:
     self.__lastMovementTime = time.time()  # Time of the last encoder movement
 
     # Create a thread to run the ISR
-    self.__interrupt_thread = threading.Thread(target=self._wait_for_interrupt)
-    self.__interrupt_thread.daemon = True
-    self.__interrupt_thread.start()
+    #self.__interrupt_thread = threading.Thread(target=self._wait_for_interrupt)
+    #self.__interrupt_thread.daemon = True
+    #self.__interrupt_thread.start()
 
+  @run_in_thread
   def _wait_for_interrupt(self):
     while self.encoderRunning:
       if self.encoderA.is_pressed or self.encoderB.is_pressed:
@@ -33,6 +44,7 @@ class rsiEncoder:
           self.resetSpeedAndDirection()
       time.sleep(0.001)  # Small delay to prevent CPU hogging
 
+  @run_in_thread
   def ISR(self):
     current_time = time.time()
     self.__lastMovementTime = current_time  # Update last movement time
@@ -54,19 +66,23 @@ class rsiEncoder:
     self.__prev_encoderA_val = encoderA_val
     self.__prev_encoderB_val = encoderB_val
 
+  @run_in_thread
   def resetSpeedAndDirection(self):
     with self.__IRS_LOCK:
       self.__encoderSpeed = 0
       self.__direction = None
 
+  @run_in_thread
   def getEncoderDirection(self):
     with self.__IRS_LOCK:
       return self.__direction  # True for CW, False for CCW, None for stopped
 
+  @run_in_thread
   def getEncoderSpeed(self):
     with self.__IRS_LOCK:
       return self.__encoderSpeed
 
+  
   def stop(self):
     self.encoderRunning = False
     if self.__interrupt_thread.is_alive():

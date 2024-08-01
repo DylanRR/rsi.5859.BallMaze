@@ -1,13 +1,20 @@
 from rsiStepMotor import rsiStepMotor
 from time import sleep
 from gpiozero import Button
+from adafruit_mcp230xx.mcp23017 import MCP23017
+import board
+import busio
 
-DIRECTION_PIN = 21
+DIRECTION_PIN = 6
 STEP_PIN = 16
-ENABLE_PIN = 20
+ENABLE_PIN = 7
 HALT_PIN = 4
 
-motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN)
+# Initialize I2C bus and MCP23017
+i2c = busio.I2C(board.SCL, board.SDA)
+mcp = MCP23017(i2c, address=0x20)
+
+motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN, mcp)
 btnHalt = Button(HALT_PIN, pull_up=True, bounce_time=0.2)
 
 def enableDisableTest():
@@ -38,7 +45,9 @@ def setPowerTest():
 	print("Power set with ramp over 10 success")
 
 def moveTest():
-	motor1.moveMotor(8000, False, 90, False, False)
+	motor1.enableMotor()
+	motor1.moveMotor(4000, True, 10)
+	motor1.disableMotor()
 
 
 btnHalt.when_deactivated = lambda: motor1.haltMotor("E-Stop Button", True)
@@ -47,8 +56,8 @@ def main():
 		#enableDisableTest()
 		#setDirectionTest()
 		#moveTest()
-		#setPowerTest()
-		moveTest()
+		setPowerTest()
+		#moveTest()
 	except Exception as e:
 		print(f"Error: {e}")
 	finally:

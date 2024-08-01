@@ -1,51 +1,53 @@
 from gpiozero import Button
 import threading
 import time
+from functools import wraps
+
+def run_in_thread(fn):
+  @wraps(fn)
+  def wrapper(*args, **kwargs):
+    #print(f"Running function {fn.__name__} in a warpped thread")
+    thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+    thread.start()
+    return thread
+  return wrapper
 
 class Encoder:
   def __init__(self, leftPin, rightPin):
     self.__running = True
-    self.__leftPin = Button(leftPin)
-    self.__rightPin = Button(rightPin)
+    self.leftPin = Button(leftPin, pull_up=True)
+    self.rightPin = Button(rightPin, pull_up=True)
     self.__value = 0
     self.__state = '00'
     self.direction = None
     self.__lastChangeTime = time.time()
     self.__timeout = 0.4
     self.__speed = 0
-    self.__minSpeedDelta = 0.08
+    self.__minSpeedDelta = 0.01
     self.__maxSpeedDelta = 0.001
     self.__speedSamples = []
-    self.__numOfSpeedSamples = 10000
+    self.__numOfSpeedSamples = 100
     
-    self.__ISR_LOCK = False
-    self.THREAD_LOCK = threading.Lock()                                         # Initialize the lock for thread synchronization
-    self.__interrupt_thread = threading.Thread(target=self._wait_for_interrupt) # Create a thread to run the ISR
-    self.__interrupt_thread.start()                                             # Start the thread
+    self.leftPin.when_pressed = self.ISR
+    self.rightPin.when_pressed = self.ISR
+    self.leftPin.when_released = self.ISR
+    self.rightPin.when_released = self.ISR
 
   def __del__(self):
     self.__running = False                                                      # Signal the thread to stop
-    if self.__interrupt_thread.is_alive():                                      # Check if the thread is still running
-      self.__interrupt_thread.join()                                            # Wait for the thread to stop
-    self.__leftPin.close()                                                      # Close the left pin
-    self.__rightPin.close()                                                     # Close the right pin
+    self.leftPin.close()                                                      # Close the left pin
+    self.rightPin.close()                                                     # Close the right pin
   
   def close(self):
     self.__del__()
 
-  def _wait_for_interrupt(self):
-    while self.__running:
-      if self.__leftPin.is_pressed or self.__rightPin.is_pressed:
-        with self.THREAD_LOCK:
-          if not self.__ISR_LOCK:
-            self.ISR()
-
   def ISR_LOCK(self, value):
     self.__ISR_LOCK = value
 
+  @run_in_thread
   def ISR(self):
-    p1 = self.__leftPin.is_pressed                                               # Get the current left pin value
-    p2 = self.__rightPin.is_pressed                                              # Get the current right pin value
+    p1 = self.leftPin.value                                               # Get the current left pin value
+    p2 = self.rightPin.value                                              # Get the current right pin value
     newState = "{}{}".format(int(p1), int(p2))                                   # Create a new state based on the current pin values
     transitions = {                                                              # Dictionary holding possible transition keys and the actions to take on each key
       "00": { 

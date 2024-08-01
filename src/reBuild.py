@@ -8,9 +8,9 @@ import board
 import busio
 
 # Define GPIO pin numbers
-DIRECTION_PIN = 7 # MCP Pin
-STEP_PIN = 16			# Pi Pin
-ENABLE_PIN = 6		# MCP Pin
+DIRECTION_PIN = 6 # MCP Pin    Was 7
+STEP_PIN = 16			# Pi Pin     
+ENABLE_PIN = 7		# MCP Pin		 Was 6
 HALT_PIN = 4			# Pi Pin
 
 # Define Encoder pins
@@ -45,7 +45,7 @@ rightSwitch = mcpInputInterruptPin(RIGHT_INITIAL_LIMIT_SWITCH, mcp)
 
 
 # Initialize Motor
-motor1 = rsiStepMotor(STEP_PIN, ENABLE_PIN, DIRECTION_PIN, mcp)
+motor1 = rsiStepMotor(STEP_PIN, DIRECTION_PIN, ENABLE_PIN, mcp) # <------------------------------IM DUMB
 
 mcp.clear_ints()  # Interrupts need to be cleared initially
 mcp.interrupt_configuration = 0x00  # 0b00000000, compare against previous value
@@ -60,7 +60,8 @@ def moveUntilCondition(condition, steps, direction, speed, trackPos=True, rampOv
     motor1.moveMotor(steps, direction, speed, trackPos, rampOverride)
 
 def moveToCenter():
-  motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
+	print("Moving to Center")
+	motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
 
 def calibrateTrack():
 	print("Entered Calibration Mode....")
@@ -71,7 +72,7 @@ def calibrateTrack():
 
 	motor1.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 80, False)
+	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 60, False)
 	motor1.moveMotor(500, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
@@ -81,7 +82,7 @@ def calibrateTrack():
 	motor1.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 80, True)
+	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 60, True)
 	motor1.moveMotor(500, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
@@ -95,9 +96,15 @@ def calibrateTrack():
 	print("Calibration Complete....")
 	encoder1.ISR_LOCK(False)
 
+
+def moveUntilConditionUpdating(condition, steps, direction, speed, trackPos=True, rampOverride=False):
+  while not condition():
+    motor1.moveMotor(steps, direction, speed, trackPos, rampOverride)
+
 def dirChange():
 	if motor1.getDirection():
-		motor1.moveMotor(motor1.getCurrentPosition, True, 20)
+		tempPos = motor1.getCurrentPosition()
+		motor1.moveMotor(tempPos, True, 20)    #<----- We need to use a moveUntil taking 1 step at a time and checking for encoder direction change / speed each step
 	else:
 		tempStepGoal = motor1.getTrackSteps() - motor1.getCurrentPosition()
 		motor1.moveMotor(tempStepGoal, False, 20)
@@ -116,7 +123,6 @@ def IR_RUN_STATE():
 				mMoveNoDirChange()
 			else:
 				motor1.setPower(0)  # Not sure if this is needed
-				sleep(.1)
 				dirChange()
 		else:
 			dirChange()
@@ -124,8 +130,10 @@ def IR_RUN_STATE():
 		motor1.setPower(0)  # Not sure if this is needed
 
 def mcp_ISR():
-	print("-------------------Interrupt detected-------------------")
 	initFlagA = mcp.int_flaga
+	if not initFlagA:
+		return
+	print("-------------------Interrupt detected-------------------")
 	print(f"MCP Interrupt Flag List: {initFlagA}")
 
 	#print(f"Flag at 0: {initFlagA[0]}")
@@ -149,20 +157,23 @@ llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
 rlsHalt.when_pressed = lambda: haltISR("Right Emergancy Limit Switch", True)
 btnHalt.when_deactivated = lambda: haltISR("E-Stop Button", True)
 
-def testMove():
-	motor1.enableMotor()
-	motor1.moveMotor(1000, False, .001, False, True)
-
 def main():
 	try:
-		testMove()
-		#calibrateTrack()
+		calibrateTrack()
 		while True:
-			break
-			#IR_RUN_STATE()
+			#break
+			IR_RUN_STATE()
 	except Exception as e:
 		print(f"Error: {e}")
 		motor1.haltMotor("Internal Error", True)
+	finally:
+		motor1.haltMotor("Program Complete", True)
+
+
+def main():
+	calibrateTrack()
+	while True:
+		IR_RUN_STATE()
 
 if __name__ == "__main__":
 	main()

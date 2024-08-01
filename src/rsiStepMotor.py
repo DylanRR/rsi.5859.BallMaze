@@ -32,8 +32,8 @@ class rsiStepMotor:
   def __setupMCPPins(self, dirPin, enablePin):
     self.__mDir =  self.__mcpObj.get_pin(dirPin)
     self.__mEnable = self.__mcpObj.get_pin(enablePin)
-    self.__mDir.direction = Direction.OUTPUT
-    self.__mEnable.direction = Direction.OUTPUT
+    self.__mDir.direction = digitalio.Direction.OUTPUT
+    self.__mEnable.direction = digitalio.Direction.OUTPUT
     self.__mDir.pull = digitalio.Pull.UP
     self.__mEnable.pull = digitalio.Pull.UP
     
@@ -166,7 +166,7 @@ class rsiStepMotor:
     self.setPower(power, not overRideRamp)
     self.__motorMoving = True
     self.__exitMove = False
-    print(f"Moving Motor {steps} steps in {'Clockwise' if clockwise else 'Counter Clockwise'} power: {power} stepDelay: {self.__stepDelay}")
+    #print(f"Moving Motor {steps} steps in {'Clockwise' if clockwise else 'Counter Clockwise'} power: {power} stepDelay: {self.__stepDelay}")
     for i in range(steps):
       if self.__exitMove:
         break
