@@ -22,6 +22,7 @@ class rsiStepMotor:
     self.__setupMCPPins(dirPin, enablePin)
 
     self.__stepDelay = 0.01
+    self.__stepIncrement = 5
     self.__rampingPower = None
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.0001
@@ -46,6 +47,9 @@ class rsiStepMotor:
 
   def overWriteCurrentPosition(self, position):
     self.__currentPosition = position
+
+  def getStepIncrement(self):
+    return self.__stepIncrement
 
   def getHomePosition(self):
     return self.__homePosition

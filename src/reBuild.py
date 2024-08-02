@@ -97,60 +97,22 @@ def calibrateTrack():
 	encoder1.ISR_LOCK(False)
 
 
-def moveUntilConditionUpdating(condition, steps, direction, speed, trackPos=True, rampOverride=False):
-  while not condition():
-    motor1.moveMotor(steps, direction, speed, trackPos, rampOverride)
-
-def dirChange():
-	if motor1.getDirection():
-		tempPos = motor1.getCurrentPosition()
-		motor1.moveMotor(tempPos, True, 20)    #<----- We need to use a moveUntil taking 1 step at a time and checking for encoder direction change / speed each step
-	else:
-		tempStepGoal = motor1.getTrackSteps() - motor1.getCurrentPosition()
-		motor1.moveMotor(tempStepGoal, False, 20)
-
-def mMoveNoDirChange():
-	tSpeed = encoder1.getSpeed()
-	if not tSpeed == 0:
-		motor1.setPower(encoder1.getSpeed())
-
-lastKnownDir = None
 def IR_RUN_STATE():
-	global lastKnownDir
 	if encoder1.isEncoderRunning():
-		if motor1.isMotorMoving():
-			if not encoder1.hasDirChanged(lastKnownDir):
-				mMoveNoDirChange()
-			else:
-				motor1.setPower(0)  # Not sure if this is needed
-				dirChange()
-		else:
-			dirChange()
-	else:
-		motor1.setPower(0)  # Not sure if this is needed
+		while encoder1.isEncoderRunning():
+			motor1.moveMotor(motor1.getStepIncrement(), encoder1.direction, encoder1.getSpeed())
+			
+
 
 def mcp_ISR():
 	initFlagA = mcp.int_flaga
 	if not initFlagA:
 		return
-	print("-------------------Interrupt detected-------------------")
-	print(f"MCP Interrupt Flag List: {initFlagA}")
-
-	#print(f"Flag at 0: {initFlagA[0]}")
-	#print(f"INFO:Left Switch Pin: {leftSwitch.pin}")
-	#print(f"INFO:Right Switch Pin: {rightSwitch.pin}")
-	
 	if initFlagA[0] == leftSwitch.pin:
-		print("Handling left switch interrupt (Pin 5)")
 		leftSwitch.handle_interrupt()
 	elif initFlagA[0] == rightSwitch.pin:
-		print("Handling right switch interrupt (pin 4)")
 		rightSwitch.handle_interrupt()
-	else:
-		print("No matching interrupt handler found")
-
 	mcp.clear_inta()
-	print("Interrupt flags cleared")
 
 intA_pin.when_pressed = mcp_ISR
 llsHalt.when_pressed = lambda: haltISR("Left Emergancy Limit Switch", True)
