@@ -55,3 +55,6 @@ HR_ls_halt.when_pressed = lambda: print("Horizontal Right Halt Limit Switch Pres
 HL_ls_halt.when_pressed = lambda: print("Horizontal Left Halt Limit Switch Pressed")
 R_ls_cali.when_pressed = lambda: print("Horizontal Right Calibration Limit Switch Pressed")
 L_ls_cali.when_pressed = lambda: print("Horizontal Left Calibration Limit Switch Pressed")
+
+# Wait for user to press Enter to quit
+input("Press Enter End Test...")
