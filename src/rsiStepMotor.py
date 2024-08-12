@@ -21,12 +21,13 @@ class rsiStepMotor:
     self.__mEnable = None
     self.__setupMCPPins(dirPin, enablePin)
 
+    self.__stepIncrement = 5
     self.__stepDelay = 0.01
     self.__stepIncrement = 5
     self.__rampingPower = None
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.0001
-    self.__internalMinDelay = 0.001
+    self.__internalMinDelay = 0.01
     self.__motorMoving = False
     self.__exitMove = False
 

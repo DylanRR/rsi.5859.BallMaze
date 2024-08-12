@@ -61,7 +61,7 @@ def moveUntilCondition(condition, steps, direction, speed, trackPos=True, rampOv
 
 def moveToCenter():
 	print("Moving to Center")
-	motor1.moveMotor(motor1.getTrackSteps() // 2, True, 20)
+	motor1.moveMotor(motor1.getTrackSteps() // 2, True, 95)
 
 def calibrateTrack():
 	print("Entered Calibration Mode....")
@@ -72,21 +72,21 @@ def calibrateTrack():
 
 	motor1.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 60, False)
-	motor1.moveMotor(500, False, 5, False)
+	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 95, False)
+	motor1.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
-	moveUntilCondition(lambda: rightSwitch.getSecondCalibration(), 1, True, 0.001, False,)
+	moveUntilCondition(lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
 	motor1.moveMotor(20, True, 1, False)
 	rightSwitch.setLockedOut(False)
 	motor1.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 60, True)
-	motor1.moveMotor(500, True, 5, True)
+	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 95, True)
+	motor1.moveMotor(200, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
-	moveUntilCondition(lambda: leftSwitch.getSecondCalibration(), 1, False, 0.001, True)
+	moveUntilCondition(lambda: leftSwitch.getSecondCalibration(), 1, False, 5, True)
 	motor1.moveMotor(20, True, 1, True)
 	leftSwitch.setLockedOut(False)
 	tempEnd = motor1.getCurrentPosition()
