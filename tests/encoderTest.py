@@ -36,10 +36,11 @@ encoder2 = Encoder(ENCODER_2_A, ENCODER_2_B)
 def main():
 	while True:
 		if encoder1.direction is not None:
-			print(f"Encoder 1 Direction: {encoder1.direction} Speed: {encoder1.__speed}")
+			print(f"Encoder 1 Direction: {encoder1.direction} Speed: {encoder1.getSpeed()}")
 		if encoder2.direction is not None:
-			print(f"Encoder 2 Direction: {encoder2.direction} Speed: {encoder2.__speed}")
+			print(f"Encoder 2 Direction: {encoder2.direction} Speed: {encoder2.getSpeed()}")
 		sleep(1)
 
 if __name__ == "__main__":
+	
 	main()

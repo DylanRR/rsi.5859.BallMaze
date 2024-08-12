@@ -10,10 +10,10 @@ LS_CALIBRATE_RIGHT = 6          #Pin Label: 6       Wire Color:Red
 LS_TOP_LEFT = 7                 #Pin Label: CE1     Wire Color:Red
 LS_BOTTOM_LEFT = 8              #Pin Label: CE0     Wire Color:Red
 LS_CALIBRATE_LEFT = 9           #Pin Label: MISO    Wire Color:Red
-LS_HORIZONTAL_RIGHT_STOP = 10   #Pin Label: MOSI    Wire Color:White
-LS_HORIZONTAL_RIGHT_INIT = 11   #Pin Label: SCLK    Wire Color:Red
-LS_HORIZONTAL_LEFT_STOP = 12    #Pin Label: 12      Wire Color:White
-LS_HORIZONTAL_LEFT_INIT = 13    #Pin Label: 13      Wire Color:Red
+LS_HORIZONTAL_RIGHT_STOP = 11   #Pin Label: MOSI    Wire Color:White
+LS_HORIZONTAL_RIGHT_INIT = 10   #Pin Label: SCLK    Wire Color:Red
+LS_HORIZONTAL_LEFT_STOP = 13    #Pin Label: 12      Wire Color:White
+LS_HORIZONTAL_LEFT_INIT = 12    #Pin Label: 13      Wire Color:Red
 ENCODER_1_A = 14                #Pin Label: TXD     Wire Color:Brown
 ENCODER_1_B = 15                #Pin Label: RXD     Wire Color:White
 ENCODER_2_A = 16                #Pin Label: 16      Wire Color:Brown
@@ -46,15 +46,17 @@ HR_ls_cali = Button(LS_HORIZONTAL_RIGHT_INIT, pull_up=True)
 HL_ls_cali = Button(LS_HORIZONTAL_LEFT_INIT, pull_up=True)
 
 
-btn_estop.when_pressed = lambda: print("Estop Button Pressed")
-TR_ls_halt.when_pressed = lambda: print("Top Right Limit Switch Pressed")
-BR_ls_halt.when_pressed = lambda: print("Bottom Right Limit Switch Pressed")
-TL_ls_halt.when_pressed = lambda: print("Top Left Limit Switch Pressed")
-BL_ls_halt.when_pressed = lambda: print("Bottom Left Limit Switch Pressed")
-HR_ls_halt.when_pressed = lambda: print("Horizontal Right Halt Limit Switch Pressed")
-HL_ls_halt.when_pressed = lambda: print("Horizontal Left Halt Limit Switch Pressed")
-R_ls_cali.when_pressed = lambda: print("Horizontal Right Calibration Limit Switch Pressed")
-L_ls_cali.when_pressed = lambda: print("Horizontal Left Calibration Limit Switch Pressed")
+btn_estop.when_deactivated = lambda: print("Estop Button Pressed")
+TR_ls_halt.when_deactivated = lambda: print("Top Right Limit Switch Pressed")
+TL_ls_halt.when_deactivated = lambda: print("Top Left Limit Switch Pressed")
+BR_ls_halt.when_deactivated = lambda: print("Bottom Right Limit Switch Pressed")
+BL_ls_halt.when_deactivated = lambda: print("Bottom Left Limit Switch Pressed")
+HR_ls_halt.when_deactivated = lambda: print("Horizontal Right Halt Limit Switch Pressed")
+HL_ls_halt.when_deactivated = lambda: print("Horizontal Left Halt Limit Switch Pressed")
+R_ls_cali.when_deactivated = lambda: print("Horizontal Right Calibration Limit Switch Pressed")
+L_ls_cali.when_deactivated = lambda: print("Horizontal Left Calibration Limit Switch Pressed")
+HR_ls_cali.when_deactivated = lambda: print("Horizontal Right Calibration Limit Switch Pressed")
+HL_ls_cali.when_deactivated = lambda: print("Horizontal Left Calibration Limit Switch Pressed")
 
 # Wait for user to press Enter to quit
 input("Press Enter End Test...")
