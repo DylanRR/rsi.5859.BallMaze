@@ -1,43 +1,46 @@
-from gpiozero import MCP3008
-from time import sleep
+import smbus2
+import time
 
-# Define the channel numbers for the potentiometers
-POTENTIOMETER_CH0 = 0
-POTENTIOMETER_CH1 = 1
+# Get I2C bus
+bus = smbus2.SMBus(1)
 
-# Set up the MCP3008 ADC
-adc0 = MCP3008(channel=POTENTIOMETER_CH0)
-adc1 = MCP3008(channel=POTENTIOMETER_CH1)
+# ADS7828 address, 0x48(72)
+address = 0x48
 
-# Read the value from a potentiometer
-def read_potentiometer(adc):
-    return adc.value * 1023
+# Voltage range
+VOLTAGE_RANGE = 3.18
 
-# Main function
-def main():
-    prev_value_0 = read_potentiometer(adc0)
-    prev_value_1 = read_potentiometer(adc1)
-
+def read_adc():
     try:
-        while True:
-            # Read current values from the potentiometers
-            current_value_0 = read_potentiometer(adc0)
-            current_value_1 = read_potentiometer(adc1)
+        # Send command byte to select channel 0 and turn on the A/D converter
+        command_byte = 0x84  # Single-ended input on channel 0, power-down between conversions
+        bus.write_byte(address, command_byte)
 
-            # Check for changes and print if there is a change
-            if current_value_0 != prev_value_0:
-                print("Potentiometer 0 value:", current_value_0)
-                prev_value_0 = current_value_0
+        time.sleep(0.1)  # Delay to allow conversion to complete
 
-            if current_value_1 != prev_value_1:
-                print("Potentiometer 1 value:", current_value_1)
-                prev_value_1 = current_value_1
+        # Read 2 bytes of data from the ADS7828
+        data = bus.read_i2c_block_data(address, 0x00, 2)
 
-            # Delay to allow time for the ADC to settle
-            sleep(0.1)
-    except KeyboardInterrupt:
-        pass
+        # Debug: Print raw data bytes
+        print(f"Raw data bytes: {data}")
 
-# Run the main function
-if __name__ == "__main__":
-    main()
+        # Convert the data to 12-bits
+        raw_adc = ((data[0] << 8) + data[1]) & 0x0FFF
+
+        return raw_adc
+    except Exception as e:
+        print(f"Read error: {e}")
+        return None
+
+while True:
+    raw_adc = read_adc()
+    if raw_adc is not None:
+        # Convert raw ADC value to voltage
+        voltage = (raw_adc / 4095.0) * VOLTAGE_RANGE
+
+        # Output data to screen
+        print(f"Digital value of analog input: {raw_adc}, Voltage: {voltage:.2f} V")
+    else:
+        print("Failed to read ADC value.")
+    
+    time.sleep(0.5)  # Adjust the delay as needed

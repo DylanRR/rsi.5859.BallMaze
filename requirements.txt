@@ -5,4 +5,6 @@ adafruit-circuitpython-busdevice
 adafruit-blinka
 adafruit-python-shell
 RpiMotorLib
+adafruit-circuitpython-pcf8574
+smbus2
 
