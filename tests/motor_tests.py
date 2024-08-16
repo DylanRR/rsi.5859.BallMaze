@@ -30,11 +30,30 @@ MOTOR_3_ENABLE = 24             #Pin Label: 24      Wire Color:White
 MOTOR_3_DIRECTION = 25          #Pin Label: 25      Wire Color:Green
 MOTOR_3_STEP = 26               #Pin Label: 26      Wire Color:Brown
 
-btn_estop = Button(BTN_ESTOP, pull_up=True, bounce_time=0.2)
-btn_estop.when_deactivated = lambda: print("Estop Button Pressed")
+motor1 = rsiStepMotor(MOTOR_1_STEP, MOTOR_1_DIRECTION, MOTOR_1_ENABLE)
+motor2 = rsiStepMotor(MOTOR_2_STEP, MOTOR_2_DIRECTION, MOTOR_2_ENABLE)
+motor3 = rsiStepMotor(MOTOR_3_STEP, MOTOR_3_DIRECTION, MOTOR_3_ENABLE)
 
-motor1 = rsiStepMotor(MOTOR_1_ENABLE, MOTOR_1_DIRECTION, MOTOR_1_STEP)
-motor2 = rsiStepMotor(MOTOR_2_ENABLE, MOTOR_2_DIRECTION, MOTOR_2_STEP)
+btn_estop = Button(BTN_ESTOP, pull_up=True, bounce_time=0.2)
+TR_ls_halt = Button(LS_TOP_RIGHT, pull_up=True)
+BR_ls_halt = Button(LS_BOTTOM_RIGHT, pull_up=True)
+TL_ls_halt = Button(LS_TOP_LEFT, pull_up=True)
+BL_ls_halt = Button(LS_BOTTOM_LEFT, pull_up=True)
+#HR_ls_halt = Button(LS_HORIZONTAL_RIGHT_STOP, pull_up=True)
+#HL_ls_halt = Button(LS_HORIZONTAL_LEFT_STOP, pull_up=True)
+
+def motorHault(message):
+  motor1.haltMotor(message, True)
+  motor2.haltMotor(message, True)
+  motor3.haltMotor(message, True)
+
+btn_estop.when_deactivated = lambda: motorHault("Estop Button Pressed")
+TR_ls_halt.when_deactivated = lambda: motorHault("Top Right Limit Switch Pressed")
+TL_ls_halt.when_deactivated = lambda: motorHault("Top Left Limit Switch Pressed")
+BR_ls_halt.when_deactivated = lambda: motorHault("Bottom Right Limit Switch Pressed")
+BL_ls_halt.when_deactivated = lambda: motorHault("Bottom Left Limit Switch Pressed")
+#HR_ls_halt.when_deactivated = lambda: motorHault("Horizontal Right Halt Limit Switch Pressed")
+#HL_ls_halt.when_deactivated = lambda: motorHault("Horizontal Left Halt Limit Switch Pressed")
 
 def testEnable():
   motor1.enableMotor()
@@ -43,11 +62,11 @@ def testEnable():
   motor1.disableMotor()
   print("Motor 1 Disabled")
   sleep(3)
-  motor2.enableMotor()
-  print("Motor 2 Enabled")
+  motor3.enableMotor()
+  print("Motor 3 Enabled")
   sleep(3)
-  motor2.disableMotor()
-  print("Motor 2 Disabled")
+  motor3.disableMotor()
+  print("Motor 3 Disabled")
 
 def moveDirection():
   motor1.enableMotor()
@@ -61,21 +80,51 @@ def moveDirection():
   sleep(3)
   motor1.disableMotor()
   sleep(.5)
-  motor2.enableMotor()
-  print("Motor 2 Enabled")
+  motor3.enableMotor()
+  print("Motor 3 Enabled")
   sleep(.5)
-  motor2.moveMotor(20, True, 30, False)
-  print("Motor 2 Moved 20 steps clockwise")
+  motor3.moveMotor(20, True, 30, False)
+  print("Motor 3 Moved 20 steps clockwise")
   sleep(3)
-  motor2.moveMotor(20, False, 30, False)
-  print("Motor 2 Moved 20 steps counter clockwise")
+  motor3.moveMotor(20, False, 30, False)
+  print("Motor 3 Moved 20 steps counter clockwise")
   sleep(3)
-  motor2.disableMotor()
+  motor3.disableMotor()
   
+
+def enable_disable_all():
+  motor1.enableMotor()
+  motor2.enableMotor()
+  motor3.enableMotor()
+  input("Press Enter to exit...")
+  motor1.disableMotor()
+  motor2.disableMotor()
+  motor3.disableMotor()
+
+def moveVirtual(step, direction, speed):
+  motor1.enableMotor()
+  motor3.enableMotor()
+  for i in range(0, step):
+    motor1.moveMotor(1, direction, speed, False)
+    #motor2.moveMotor(1, direction, speed, False)
+    motor3.moveMotor(1, direction, speed, False)
+  motor1.disableMotor()
+  motor3.disableMotor()
 
 
 def main():
-  testEnable()
+  moveVirtual(4000, True, 98)
+  #motor2.enableMotor()
+  #motor2.moveMotor(4000, True, 95, False)
+  #motor2.disableMotor()
+
+  #motor1.enableMotor()
+  #motor1.moveMotor(20, True, 10, False)
+  #motor1.disableMotor()
+
+
+
+
 
 if __name__ == "__main__":
     main()

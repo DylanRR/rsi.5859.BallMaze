@@ -124,7 +124,8 @@ def main():
 		calibrateTrack()
 		while True:
 			#break
-			IR_RUN_STATE()
+			#IR_RUN_STATE()
+			pass
 	except Exception as e:
 		print(f"Error: {e}")
 		motor1.haltMotor("Internal Error", True)

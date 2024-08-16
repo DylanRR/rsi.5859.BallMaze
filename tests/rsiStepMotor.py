@@ -1,4 +1,4 @@
-from gpiozero import OutputDevice
+from gpiozero import DigitalOutputDevice
 from adafruit_mcp230xx.digital_inout import DigitalInOut, Direction
 from adafruit_mcp230xx.mcp23017 import MCP23017
 from time import sleep
@@ -14,10 +14,9 @@ class rsiStepMotor:
     self.__trackSteps = None
     self.__direction = None    # True = Clockwise, False = Counter Clockwise
 
-    self.__mStep = OutputDevice(stepPin)
-
-    self.__mDir =  OutputDevice(dirPin)
-    self.__mEnable = OutputDevice(enablePin)
+    self.__mStep = DigitalOutputDevice(stepPin, active_high=True, initial_value=False)
+    self.__mDir = DigitalOutputDevice(dirPin, active_high=True, initial_value=False)
+    self.__mEnable = DigitalOutputDevice(enablePin, active_high=True, initial_value=False)
 
     self.__stepIncrement = 5
     self.__stepDelay = 0.01
