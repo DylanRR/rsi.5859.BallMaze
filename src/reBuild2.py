@@ -27,21 +27,21 @@ def calibrate_horizontal_track():
 
 	motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(lambda: rightSwitch.getFirstCalibration(), 1, True, 95, False)
+	moveUntilCondition(motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 95, False)
 	motor2.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
-	moveUntilCondition(lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
+	moveUntilCondition(motor2, lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
 	motor2.moveMotor(20, True, 1, False)
 	rightSwitch.setLockedOut(False)
 	motor2.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(lambda: leftSwitch.getFirstCalibration(), 1, False, 95, True)
+	moveUntilCondition(motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 95, True)
 	motor2.moveMotor(200, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
-	moveUntilCondition(lambda: leftSwitch.getSecondCalibration(), 1, False, 5, True)
+	moveUntilCondition(motor2, lambda: leftSwitch.getSecondCalibration(), 1, False, 5, True)
 	motor2.moveMotor(20, True, 1, True)
 	leftSwitch.setLockedOut(False)
 	tempEnd = motor2.getCurrentPosition()
@@ -61,21 +61,14 @@ def IR_RUN_STATE():
 def main():
 	try:
 		calibrate_horizontal_track()
-		while True:
-			#break
-			#IR_RUN_STATE()
-			pass
 	except Exception as e:
 		print(f"Error: {e}")
 		motor1.haltMotor("Internal Error", False)
 		motor2.haltMotor("Internal Error", False)
 		motor3.haltMotor("Internal Error", True)
-	finally:
-		motor1.haltMotor("Program Complete", False)
-		motor2.haltMotor("Program Complete", False)
-		motor3.haltMotor("Program Complete", True)
 		sys.exit(1)
 
 
 if __name__ == "__main__":
+	#calibrate_horizontal_track()
 	main()

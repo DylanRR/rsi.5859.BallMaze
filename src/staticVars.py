@@ -29,29 +29,17 @@ ENCODER_2_A = 16                #Pin Label: 16      Wire Color:Brown
 ENCODER_2_B = 17                #Pin Label: 17      Wire Color:White
 
 
-MOTOR_1_ENABLE = 18             #Pin Label: 18      Wire Color:White    #Left Motor
-MOTOR_1_DIRECTION = 19          #Pin Label: 19      Wire Color:Green    #Left Motor
-MOTOR_1_STEP = 20               #Pin Label: 20      Wire Color:Brown    #Left Motor
+MOTOR_1_ENABLE = 21             #Pin Label: 21      Wire Color:White    #Left Motor
+MOTOR_1_DIRECTION = 22          #Pin Label: 22      Wire Color:Green    #Left Motor
+MOTOR_1_STEP = 23               #Pin Label: 23      Wire Color:Brown    #Left Motor
 
-MOTOR_2_ENABLE = 21             #Pin Label: 21      Wire Color:White    #Horizontal Motor
-MOTOR_2_DIRECTION = 22          #Pin Label: 22      Wire Color:Green    #Horizontal Motor
-MOTOR_2_STEP = 23               #Pin Label: 23      Wire Color:Brown    #Horizontal Motor
+MOTOR_2_ENABLE = 18             #Pin Label: 18      Wire Color:White    #Horizontal Motor
+MOTOR_2_DIRECTION = 19          #Pin Label: 19      Wire Color:Green    #Horizontal Motor
+MOTOR_2_STEP = 20               #Pin Label: 20      Wire Color:Brown    #Horizontal Motor
 
 MOTOR_3_ENABLE = 24             #Pin Label: 24      Wire Color:White    #Right Motor
 MOTOR_3_DIRECTION = 25          #Pin Label: 25      Wire Color:Green    #Right Motor
 MOTOR_3_STEP = 26               #Pin Label: 26      Wire Color:Brown    #Right Motor
-
-
-
-
-
-MOTOR_1_ENABLE = 21             #Pin Label: 21      Wire Color:White    #Horizontal Motor
-MOTOR_1_DIRECTION = 22          #Pin Label: 22      Wire Color:Green    #Horizontal Motor
-MOTOR_1_STEP = 23               #Pin Label: 23      Wire Color:Brown    #Horizontal Motor
-
-MOTOR_2_ENABLE = 18             #Pin Label: 18      Wire Color:White    #Left Motor
-MOTOR_2_DIRECTION = 19          #Pin Label: 19      Wire Color:Green    #Left Motor
-MOTOR_2_STEP = 20               #Pin Label: 20      Wire Color:Brown    #Left Motor
 
 
 
@@ -67,15 +55,15 @@ motor3 = rsiStepMotor(MOTOR_3_STEP, MOTOR_3_DIRECTION, MOTOR_3_ENABLE)
 motors = [motor1, motor2, motor3]
 
 # Initialize Haulting Limit Switches
-btn_estop = haltingLimitSwitch(BTN_ESTOP, motors)
-TR_ls_halt = haltingLimitSwitch(LS_TOP_RIGHT, motors)
-BR_ls_halt = haltingLimitSwitch(LS_BOTTOM_RIGHT, motors)
-TL_ls_halt = haltingLimitSwitch(LS_TOP_LEFT, motors)
-BL_ls_halt = haltingLimitSwitch(LS_BOTTOM_LEFT, motors)
-HR_ls_halt = haltingLimitSwitch(LS_HORIZONTAL_RIGHT_STOP, motors)
-HL_ls_halt = haltingLimitSwitch(LS_HORIZONTAL_LEFT_STOP, motors)
+btn_estop = haltingLimitSwitch("btn_estop", BTN_ESTOP, motors)
+TR_ls_halt = haltingLimitSwitch("TR_ls_halt", LS_TOP_RIGHT, motors)
+BR_ls_halt = haltingLimitSwitch("BR_ls_halt", LS_BOTTOM_RIGHT, motors)
+TL_ls_halt = haltingLimitSwitch("TL_ls_halt", LS_TOP_LEFT, motors)  #NOTE: May need to turn of the pullup resistor
+BL_ls_halt = haltingLimitSwitch("BL_ls_halt", LS_BOTTOM_LEFT, motors)
+HR_ls_halt = haltingLimitSwitch("HR_ls_halt", LS_HORIZONTAL_RIGHT_STOP, motors)
+HL_ls_halt = haltingLimitSwitch("HL_ls_halt", LS_HORIZONTAL_LEFT_STOP, motors)
 
 R_ls_cali = limitSwitch(LS_CALIBRATE_RIGHT)
 L_ls_cali = limitSwitch(LS_CALIBRATE_LEFT)
 HR_ls_cali = limitSwitch(LS_HORIZONTAL_RIGHT_INIT)
-HL_ls_cali = limitSwitch(LS_HORIZONTAL_LEFT_INIT)
+HL_ls_cali = limitSwitch(LS_HORIZONTAL_LEFT_INIT, False)  # Disable Pullup 

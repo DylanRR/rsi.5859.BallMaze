@@ -5,9 +5,9 @@ from typing import List
 import sys
 
 class haltingLimitSwitch:
-  def __init__(self, pin: int, motorObjs: List[rsiStepMotor], pullUp: bool = True, bounceTime: float = 0.02):
+  def __init__(self, name: str, pin: int, motorObjs: List[rsiStepMotor], pullUp: bool = True, bounceTime: float = 0.02):
     self.pin = pin
-    self.objName = self.__getObjName()
+    self.objName = name
     self.switch = Button(pin, pull_up=pullUp, bounce_time=bounceTime)
     self.switch.when_deactivated = self.__haultMotor
     self.motors = motorObjs
