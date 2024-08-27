@@ -29,7 +29,7 @@ MOTOR_3_DIRECTION = 25          #Pin Label: 25      Wire Color:Green
 MOTOR_3_STEP = 26               #Pin Label: 26      Wire Color:Brown
 
 
-pin2test = 13
+pin2test = 10
 
 pin_test = Button(pin2test, pull_up=True, bounce_time=0.02)
 pin_test.when_deactivated= lambda: print("Pin Deactivated")
