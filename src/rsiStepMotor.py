@@ -1,13 +1,10 @@
-from gpiozero import OutputDevice
-from adafruit_mcp230xx.digital_inout import DigitalInOut, Direction
-from adafruit_mcp230xx.mcp23017 import MCP23017
+from gpiozero import DigitalOutputDevice
 from time import sleep
 import os
-import digitalio
+import sys
 
 class rsiStepMotor:
-  def __init__(self, stepPin, dirPin, enablePin, mcpObj: MCP23017):
-    self.__mcpObj = mcpObj
+  def __init__(self, stepPin, dirPin, enablePin):
     self.__power = 0
     self.__currentPosition = 0
     self.__homePosition = 0
@@ -15,11 +12,9 @@ class rsiStepMotor:
     self.__trackSteps = None
     self.__direction = None    # True = Clockwise, False = Counter Clockwise
 
-    self.__mStep = OutputDevice(stepPin)
-
-    self.__mDir =  None
-    self.__mEnable = None
-    self.__setupMCPPins(dirPin, enablePin)
+    self.__mStep = DigitalOutputDevice(stepPin, active_high=True, initial_value=False)
+    self.__mDir = DigitalOutputDevice(dirPin, active_high=True, initial_value=False)
+    self.__mEnable = DigitalOutputDevice(enablePin, active_high=True, initial_value=False)
 
     self.__stepIncrement = 5
     self.__stepDelay = 0.01
@@ -30,17 +25,16 @@ class rsiStepMotor:
     self.__internalMinDelay = 0.01
     self.__motorMoving = False
     self.__exitMove = False
+  
+  def __del__(self):
+    self.disableMotor()
+    self.__mStep.close()
+    self.__mDir.close()
+    self.__mEnable.close()
 
-  def __setupMCPPins(self, dirPin, enablePin):
-    self.__mDir =  self.__mcpObj.get_pin(dirPin)
-    self.__mEnable = self.__mcpObj.get_pin(enablePin)
-    self.__mDir.direction = digitalio.Direction.OUTPUT
-    self.__mEnable.direction = digitalio.Direction.OUTPUT
-    self.__mDir.pull = digitalio.Pull.UP
-    self.__mEnable.pull = digitalio.Pull.UP
+  def close(self):
+    self.__del__()
     
-    
-
   def calibrateTrack(self, homePosition, endPosition):
     self.__homePosition = homePosition
     self.__endPosition = endPosition
@@ -74,7 +68,8 @@ class rsiStepMotor:
     self.disableMotor()
     print(f"Motor Halted: {message}")
     if hardExit:
-      os._exit(1)
+      #os._exit(1)
+      sys.exit(1)  # Better way to exit as it calls all the __del__ functions from all objects created
 
   def resetRamping(self):
     self.__rampingPower = False

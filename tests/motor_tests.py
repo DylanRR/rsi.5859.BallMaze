@@ -106,7 +106,7 @@ def moveVirtual(step, direction, speed):
   motor3.enableMotor()
   for i in range(0, step):
     motor1.moveMotor(1, direction, speed, False)
-    motor2.moveMotor(1, direction, speed, False)
+    #motor2.moveMotor(1, direction, speed, False)
     motor3.moveMotor(1, direction, speed, False)
   motor1.disableMotor()
   motor3.disableMotor()
