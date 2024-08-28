@@ -3,8 +3,6 @@ from time import sleep
 import os
 import sys
 
-class mHaltException(Exception):
-  pass
 
 class rsiStepMotor:
   def __init__(self, stepPin, dirPin, enablePin):

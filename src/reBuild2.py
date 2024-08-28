@@ -1,19 +1,23 @@
 import staticVars as sVars
-from staticVars import motor1, motor2, motor3, encoder1, encoder2, motors, encoders, limitSwitches, haltingLimitSwitches
-from rsiStepMotor import rsiStepMotor, mHaltException
-from limitSwitch import mHaltException as lsHaltException
+import staticEncoders as sEncoders
+import staticLimitSwitches as sLimitSwitches
+import staticMotors as sMotors
 import sys
+import time
 
+class mHaltException(Exception):
+	def __init__(self, message):
+		super().__init__(message)
 
 def encoderLocked(locked):
-	sVars.encoder1.ISR_LOCK(locked)
-	sVars.encoder2.ISR_LOCK(locked)
+	sEncoders.encoder1.ISR_LOCK(locked)
+	sEncoders.encoder2.ISR_LOCK(locked)
 
-def moveUntilCondition(motorObj: rsiStepMotor, condition, steps, direction, speed, trackPos=True, rampOverride=False):
+def moveUntilCondition(motorObj: sMotors.rsiStepMotor, condition, steps, direction, speed, trackPos=True, rampOverride=False):
   while not condition():
     motorObj.moveMotor(steps, direction, speed, trackPos, rampOverride)
 
-def moveToCenter(motorObj: rsiStepMotor, speed=95):
+def moveToCenter(motorObj: sMotors.rsiStepMotor, speed=95):
 	print("Moving to Center")
 	motorObj.moveMotor(motorObj.getTrackSteps() // 2, True, speed)
 
@@ -23,61 +27,65 @@ def calibrate_horizontal_track():
 	print("Encoders Locked")
 	tempHome = 0
 	tempEnd = None
-	leftSwitch = sVars.HL_ls_cali
-	rightSwitch = sVars.HR_ls_cali
+	leftSwitch = sLimitSwitches.HL_ls_cali
+	rightSwitch = sLimitSwitches.HR_ls_cali
 
-	motor2.enableMotor()
+	sMotors.motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 95, False)
-	motor2.moveMotor(200, False, 5, False)
+	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 95, False)
+	sMotors.motor2.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
-	moveUntilCondition(motor2, lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
-	motor2.moveMotor(20, True, 1, False)
+	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
+	sMotors.motor2.moveMotor(20, True, 1, False)
 	rightSwitch.setLockedOut(False)
-	motor2.overWriteCurrentPosition(tempHome)
+	sMotors.motor2.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 95, True)
-	motor2.moveMotor(200, True, 5, True)
+	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 95, True)
+	sMotors.motor2.moveMotor(200, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
-	moveUntilCondition(motor2, lambda: leftSwitch.getSecondCalibration(), 1, False, 5, True)
-	motor2.moveMotor(20, True, 1, True)
+	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getSecondCalibration(), 1, False, 5, True)
+	sMotors.motor2.moveMotor(20, True, 1, True)
 	leftSwitch.setLockedOut(False)
-	tempEnd = motor2.getCurrentPosition()
+	tempEnd = sMotors.motor2.getCurrentPosition()
 
-	motor2.calibrateTrack(tempHome, tempEnd)
-	moveToCenter(motor2)
+	sMotors.motor2.calibrateTrack(tempHome, tempEnd)
+	moveToCenter(sMotors.motor2)
 	print("Calibration Complete....")
 	encoderLocked(False)
 
 
 def IR_RUN_STATE():
-	if encoder2.isEncoderRunning():
-		while encoder2.isEncoderRunning():
-			motor2.moveMotor(motor2.getStepIncrement(), encoder2.direction, encoder2.getSpeed())
+	if sEncoders.encoder2.isEncoderRunning():
+		while sEncoders.encoder2.isEncoderRunning():
+			sMotors.motor2.moveMotor(sMotors.motor2.getStepIncrement(), sEncoders.encoder2.direction, sEncoders.encoder2.getSpeed())
 			
-def disableAllMotors():
-  for index, motor in enumerate(motors, start=1):
-    motor.haltMotor(f"Motor {index}")
+def checkException():
+	if sMotors.motors_halted:
+		raise mHaltException(sMotors.halt_reason)
+	
+def garbageCollection():
+	sMotors.cleanup()
+	sEncoders.cleanup()
+	sLimitSwitches.cleanup()
 
 def main():
 	try:
-		#calibrate_horizontal_track()
 		while True:
+			checkException()
 			pass
-	except (lsHaltException, mHaltException) as raisedMsg:
-		print(raisedMsg)
-		disableAllMotors()
 	except KeyboardInterrupt:
-		print("Exiting Program")
-		disableAllMotors()
+		print("KeyboardInterrupt Triggered Killing the program...")
+		sMotors.disableAllMotors()
+	except mHaltException as lsObj:
+		print(f"Stoppage Triggered By: {lsObj}")
 	except Exception as e:
 		print(e)
-		disableAllMotors()
+		sMotors.disableAllMotors()
 	finally:
-		sVars.cleanup()
+		garbageCollection()
 		sys.exit(0)
 
 if __name__ == "__main__":

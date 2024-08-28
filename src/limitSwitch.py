@@ -1,19 +1,17 @@
 from gpiozero import Button
-from rsiStepMotor import rsiStepMotor
 import inspect
-from typing import List
-import sys
+import staticMotors as sMotor
 
 class mHaltException(Exception):
-  pass
+  def __init__(self, message):
+    super().__init__(message)
 
 class haltingLimitSwitch:
-  def __init__(self, name: str, pin: int, motorObjs: List[rsiStepMotor], pullUp: bool = True, bounceTime: float = 0.02):
+  def __init__(self, name: str, pin: int, pullUp: bool = True, bounceTime: float = 0.02):
     self.pin = pin
     self.objName = name
     self.switch = Button(pin, pull_up=pullUp, bounce_time=bounceTime)
     self.switch.when_deactivated = self.__haultMotor
-    self.motors = motorObjs
 
   def __del__(self):
     self.close()
@@ -21,7 +19,10 @@ class haltingLimitSwitch:
     self.switch.close()
 
   def __haultMotor(self):
-    raise mHaltException(self.objName)
+    sMotor.disableAllMotors(self.objName)
+
+  def triggerHaltEvent(self):
+    self.__haultMotor()
 
 
 class limitSwitch:
