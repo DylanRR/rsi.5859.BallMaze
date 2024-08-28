@@ -3,6 +3,9 @@ from time import sleep
 import os
 import sys
 
+class MotorException(Exception):
+  pass
+
 class rsiStepMotor:
   def __init__(self, stepPin, dirPin, enablePin):
     self.__power = 0
@@ -27,10 +30,13 @@ class rsiStepMotor:
     self.__exitMove = False
   
   def __del__(self):
-    self.disableMotor()
-    self.__mStep.close()
-    self.__mDir.close()
-    self.__mEnable.close()
+    if self.__mStep is not None and not self.__mStep.closed:
+      self.__mStep.close()
+    if self.__mDir is not None and not self.__mDir.closed:
+      self.__mDir.close()  
+    if self.__mEnable is not None and not self.__mEnable.closed:
+      self.disableMotor()
+      self.__mEnable.close()
 
   def close(self):
     self.__del__()
@@ -64,13 +70,13 @@ class rsiStepMotor:
   def disableMotor(self):
     self.__mEnable.value = True
 
-  def haltMotor(self, message="Internal Halt", hardExit=True):
+  def haltMotor(self, message="Internal Halt", raiseException=True):
     self.disableMotor()
     print(f"Motor Halted: {message}")
-    if hardExit:
-      #os._exit(1)
-      sys.exit(1)  # Better way to exit as it calls all the __del__ functions from all objects created
-
+    if raiseException:
+      #raise MotorException(message)
+      sys.exit(1)
+  
   def resetRamping(self):
     self.__rampingPower = False
     self.__currentRampPower = 0

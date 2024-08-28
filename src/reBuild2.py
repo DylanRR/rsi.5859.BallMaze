@@ -62,12 +62,7 @@ def main():
 	try:
 		calibrate_horizontal_track()
 	except Exception as e:
-		print(f"Error: {e}")
-		motor1.haltMotor("Internal Error", False)
-		motor2.haltMotor("Internal Error", False)
-		motor3.haltMotor("Internal Error", True)
-		sys.exit(1)
-
+		print(e)
 
 if __name__ == "__main__":
 	#calibrate_horizontal_track()

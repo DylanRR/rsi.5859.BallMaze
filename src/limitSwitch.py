@@ -4,6 +4,9 @@ import inspect
 from typing import List
 import sys
 
+class MotorException(Exception):
+  pass
+
 class haltingLimitSwitch:
   def __init__(self, name: str, pin: int, motorObjs: List[rsiStepMotor], pullUp: bool = True, bounceTime: float = 0.02):
     self.pin = pin
@@ -12,23 +15,15 @@ class haltingLimitSwitch:
     self.switch.when_deactivated = self.__haultMotor
     self.motors = motorObjs
 
-  def __getObjName(self) -> str:
-    frame = inspect.currentframe().f_back
-    for name, obj in frame.f_locals.items():
-      if obj is self:
-        return name
-    return None
-
   def __del__(self):
-    self.switch.close()
-
-  def close(self):
-    self.__del__()
+    if self.switch is not None and not self.switch.closed:
+      self.switch.close()
 
   def __haultMotor(self):
     for index, motor in enumerate(self.motors, start=1):
       hMsg = f"{self.objName} Activated: Halting Motor - {index}" # Debug message
-      motor.haltMotor(hMsg, False)
+      motor.haltMotor(hMsg, raiseException=False)
+    #raise MotorException("Motors halted due to activation")
     sys.exit(1)
 
 
