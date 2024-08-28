@@ -14,7 +14,7 @@ def run_in_thread(fn):
 
 class Encoder:
   def __init__(self, leftPin, rightPin):
-    self.__running = True
+    self.__ISR_LOCK = False
     self.leftPin = Button(leftPin, pull_up=True)
     self.rightPin = Button(rightPin, pull_up=True)
     self.__value = 0
@@ -34,18 +34,19 @@ class Encoder:
     self.rightPin.when_released = self.ISR
 
   def __del__(self):
-    self.__running = False                                                      # Signal the thread to stop
+    self.close()                                                    
+  
+  def close(self):  #TODO: Deal with open threads                                                    
     self.leftPin.close()                                                      # Close the left pin
     self.rightPin.close()                                                     # Close the right pin
-  
-  def close(self):
-    self.__del__()
 
-  def ISR_LOCK(self, value):
-    self.__ISR_LOCK = value
+  def ISR_LOCK(self, bool):
+    self.__ISR_LOCK = bool
 
   @run_in_thread
   def ISR(self):
+    if self.__ISR_LOCK:
+      return
     p1 = self.leftPin.value                                               # Get the current left pin value
     p2 = self.rightPin.value                                              # Get the current right pin value
     newState = "{}{}".format(int(p1), int(p2))                                   # Create a new state based on the current pin values

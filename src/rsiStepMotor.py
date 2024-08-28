@@ -3,7 +3,7 @@ from time import sleep
 import os
 import sys
 
-class MotorException(Exception):
+class mHaltException(Exception):
   pass
 
 class rsiStepMotor:
@@ -30,16 +30,13 @@ class rsiStepMotor:
     self.__exitMove = False
   
   def __del__(self):
-    if self.__mStep is not None and not self.__mStep.closed:
-      self.__mStep.close()
-    if self.__mDir is not None and not self.__mDir.closed:
-      self.__mDir.close()  
-    if self.__mEnable is not None and not self.__mEnable.closed:
-      self.disableMotor()
-      self.__mEnable.close()
+    self.close()
 
   def close(self):
-    self.__del__()
+    self.disableMotor()
+    self.__mStep.close()
+    self.__mDir.close()
+    self.__mEnable.close()
     
   def calibrateTrack(self, homePosition, endPosition):
     self.__homePosition = homePosition
@@ -70,12 +67,9 @@ class rsiStepMotor:
   def disableMotor(self):
     self.__mEnable.value = True
 
-  def haltMotor(self, message="Internal Halt", raiseException=True):
+  def haltMotor(self, message="Internal Halt"):
     self.disableMotor()
     print(f"Motor Halted: {message}")
-    if raiseException:
-      #raise MotorException(message)
-      sys.exit(1)
   
   def resetRamping(self):
     self.__rampingPower = False

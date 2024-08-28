@@ -47,6 +47,7 @@ MOTOR_3_STEP = 26               #Pin Label: 26      Wire Color:Brown    #Right M
 # Initialize Encoders
 encoder1 = Encoder(ENCODER_1_A, ENCODER_1_B)
 encoder2 = Encoder(ENCODER_2_A, ENCODER_2_B)
+encoders = [encoder1, encoder2]
 
 # Initialize Motor
 motor1 = rsiStepMotor(MOTOR_1_STEP, MOTOR_1_DIRECTION, MOTOR_1_ENABLE)
@@ -62,8 +63,22 @@ TL_ls_halt = haltingLimitSwitch("TL_ls_halt", LS_TOP_LEFT, motors, False)  #NOTE
 BL_ls_halt = haltingLimitSwitch("BL_ls_halt", LS_BOTTOM_LEFT, motors)
 HR_ls_halt = haltingLimitSwitch("HR_ls_halt", LS_HORIZONTAL_RIGHT_STOP, motors)
 HL_ls_halt = haltingLimitSwitch("HL_ls_halt", LS_HORIZONTAL_LEFT_STOP, motors)
+haltingLimitSwitches = [btn_estop, TR_ls_halt, BR_ls_halt, TL_ls_halt, BL_ls_halt, HR_ls_halt, HL_ls_halt]
 
 R_ls_cali = limitSwitch(LS_CALIBRATE_RIGHT)
 L_ls_cali = limitSwitch(LS_CALIBRATE_LEFT)
 HR_ls_cali = limitSwitch(LS_HORIZONTAL_RIGHT_INIT)
-HL_ls_cali = limitSwitch(LS_HORIZONTAL_LEFT_INIT, False)  # Disable Pullup 
+HL_ls_cali = limitSwitch(LS_HORIZONTAL_LEFT_INIT, False)  # Disable Pullup
+limitSwitches = [R_ls_cali, L_ls_cali, HR_ls_cali, HL_ls_cali]
+
+
+#Object cleanup
+def cleanup():
+  for motor in motors:
+    motor.close()
+  for switch in haltingLimitSwitches:
+    switch.close()
+  for switch in limitSwitches:
+    switch.close()
+  for encoder in encoders:
+    encoder.close()

@@ -1,6 +1,7 @@
 import staticVars as sVars
-from staticVars import motor1, motor2, motor3, encoder1, encoder2
-from rsiStepMotor import rsiStepMotor
+from staticVars import motor1, motor2, motor3, encoder1, encoder2, motors, encoders, limitSwitches, haltingLimitSwitches
+from rsiStepMotor import rsiStepMotor, mHaltException
+from limitSwitch import mHaltException as lsHaltException
 import sys
 
 
@@ -58,12 +59,25 @@ def IR_RUN_STATE():
 			motor1.moveMotor(motor1.getStepIncrement(), encoder1.direction, encoder1.getSpeed())
 			
 
+def disableAllMotors():
+	for motor in motors:
+		motor.disableMotor()
+
 def main():
 	try:
 		calibrate_horizontal_track()
+	except (lsHaltException, mHaltException) as e:
+		print(e)
+		disableAllMotors()
+	except KeyboardInterrupt:
+		print("Exiting Program")
+		disableAllMotors()
 	except Exception as e:
 		print(e)
+		disableAllMotors()
+	finally:
+		sVars.cleanup()
+		sys.exit(0)
 
 if __name__ == "__main__":
-	#calibrate_horizontal_track()
 	main()

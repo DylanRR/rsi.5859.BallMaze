@@ -4,7 +4,7 @@ import inspect
 from typing import List
 import sys
 
-class MotorException(Exception):
+class mHaltException(Exception):
   pass
 
 class haltingLimitSwitch:
@@ -16,15 +16,12 @@ class haltingLimitSwitch:
     self.motors = motorObjs
 
   def __del__(self):
-    if self.switch is not None and not self.switch.closed:
-      self.switch.close()
+    self.close()
+  def close(self):
+    self.switch.close()
 
   def __haultMotor(self):
-    for index, motor in enumerate(self.motors, start=1):
-      hMsg = f"{self.objName} Activated: Halting Motor - {index}" # Debug message
-      motor.haltMotor(hMsg, raiseException=False)
-    #raise MotorException("Motors halted due to activation")
-    sys.exit(1)
+    raise mHaltException(self.objName)
 
 
 class limitSwitch:
@@ -38,9 +35,9 @@ class limitSwitch:
     self.__secondCalibration = False
 
   def __del__(self):
-    self.switch.close()
+    self.close()
   def close(self):
-    self.__del__()
+    self.switch.close()
 
   def __getObjName(self) -> str:
     frame = inspect.currentframe().f_back
