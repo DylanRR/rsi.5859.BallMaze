@@ -59,12 +59,14 @@ def IR_RUN_STATE():
 			motor2.moveMotor(motor2.getStepIncrement(), encoder2.direction, encoder2.getSpeed())
 			
 def disableAllMotors():
-	for motor in motors:
-		motor.disableMotor()
+  for index, motor in enumerate(motors, start=1):
+    motor.haltMotor(f"Motor {index}")
 
 def main():
 	try:
-		calibrate_horizontal_track()
+		#calibrate_horizontal_track()
+		while True:
+			pass
 	except (lsHaltException, mHaltException) as raisedMsg:
 		print(raisedMsg)
 		disableAllMotors()

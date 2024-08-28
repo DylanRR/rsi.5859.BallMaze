@@ -33,7 +33,7 @@ class rsiStepMotor:
     self.close()
 
   def close(self):
-    self.disableMotor()
+    #self.disableMotor()
     self.__mStep.close()
     self.__mDir.close()
     self.__mEnable.close()
