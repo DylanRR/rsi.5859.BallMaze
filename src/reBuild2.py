@@ -54,11 +54,10 @@ def calibrate_horizontal_track():
 
 
 def IR_RUN_STATE():
-	if encoder1.isEncoderRunning():
-		while encoder1.isEncoderRunning():
-			motor1.moveMotor(motor1.getStepIncrement(), encoder1.direction, encoder1.getSpeed())
+	if encoder2.isEncoderRunning():
+		while encoder2.isEncoderRunning():
+			motor2.moveMotor(motor2.getStepIncrement(), encoder2.direction, encoder2.getSpeed())
 			
-
 def disableAllMotors():
 	for motor in motors:
 		motor.disableMotor()
@@ -66,8 +65,8 @@ def disableAllMotors():
 def main():
 	try:
 		calibrate_horizontal_track()
-	except (lsHaltException, mHaltException) as e:
-		print(e)
+	except (lsHaltException, mHaltException) as raisedMsg:
+		print(raisedMsg)
 		disableAllMotors()
 	except KeyboardInterrupt:
 		print("Exiting Program")
