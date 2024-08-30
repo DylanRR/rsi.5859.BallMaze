@@ -16,17 +16,17 @@ LS_HORIZONTAL_LEFT_STOP = 13    #Pin Label: 13      Wire Color:White
 btn_estop = haltingLimitSwitch("btn_estop", BTN_ESTOP)
 TR_ls_halt = haltingLimitSwitch("TR_ls_halt", LS_TOP_RIGHT)
 BR_ls_halt = haltingLimitSwitch("BR_ls_halt", LS_BOTTOM_RIGHT)
-TL_ls_halt = haltingLimitSwitch("TL_ls_halt", LS_TOP_LEFT, False)  #NOTE: May need to turn of the pullup resistor
+TL_ls_halt = haltingLimitSwitch("TL_ls_halt", LS_TOP_LEFT)  #NOTE: May need to turn of the pullup resistor
 BL_ls_halt = haltingLimitSwitch("BL_ls_halt", LS_BOTTOM_LEFT)
 HR_ls_halt = haltingLimitSwitch("HR_ls_halt", LS_HORIZONTAL_RIGHT_STOP)
 HL_ls_halt = haltingLimitSwitch("HL_ls_halt", LS_HORIZONTAL_LEFT_STOP)
-haltingLimitSwitches = [TR_ls_halt, BR_ls_halt, TL_ls_halt, BL_ls_halt, HR_ls_halt, HL_ls_halt]
+haltingLimitSwitches = [btn_estop, TR_ls_halt, BR_ls_halt, TL_ls_halt, BL_ls_halt, HR_ls_halt, HL_ls_halt]
 
 # Initialize Limit Switches
 R_ls_cali = limitSwitch(LS_CALIBRATE_RIGHT)
 L_ls_cali = limitSwitch(LS_CALIBRATE_LEFT)
 HR_ls_cali = limitSwitch(LS_HORIZONTAL_RIGHT_INIT)
-HL_ls_cali = limitSwitch(LS_HORIZONTAL_LEFT_INIT, False)  # Disable Pullup
+HL_ls_cali = limitSwitch(LS_HORIZONTAL_LEFT_INIT)
 limitSwitches = [R_ls_cali, L_ls_cali, HR_ls_cali, HL_ls_cali]
 
 

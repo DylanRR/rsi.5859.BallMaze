@@ -1,4 +1,9 @@
-from gpiozero import Button, InputDevice, DigitalInputDevice
+from gpiozero import Button, InputDevice, DigitalInputDevice, Device
+import atexit
+# Close all devices managed by gpiozero
+Device.close(12)
+Device.close(13)
+
 
 #GPIO PI Pins
 BTN_ESTOP = 0                   #Pin Label: EED     Wire Color: Red
@@ -12,8 +17,15 @@ LS_BOTTOM_LEFT = 8              #Pin Label: CE0     Wire Color:Red
 LS_CALIBRATE_LEFT = 9           #Pin Label: MISO    Wire Color:Red
 LS_HORIZONTAL_RIGHT_INIT = 10   #Pin Label: MOSI    Wire Color:Red
 LS_HORIZONTAL_RIGHT_STOP = 11   #Pin Label: SCLK    Wire Color:White
+
+
 LS_HORIZONTAL_LEFT_INIT = 12    #Pin Label: 12      Wire Color:Red
-LS_HORIZONTAL_LEFT_STOP = 13    #Pin Label: 13      Wire Color:White
+
+
+LS_HORIZONTAL_LEFT_STOP = 13    #Pin Label: 13      Wire Color:White <---------------------
+
+
+
 ENCODER_1_A = 14                #Pin Label: TXD     Wire Color:Brown
 ENCODER_1_B = 15                #Pin Label: RXD     Wire Color:White
 ENCODER_2_A = 16                #Pin Label: 16      Wire Color:Brown
@@ -43,7 +55,9 @@ R_ls_cali = Button(LS_CALIBRATE_RIGHT, pull_up=True, bounce_time=0.02)
 L_ls_cali = Button(LS_CALIBRATE_LEFT, pull_up=True, bounce_time=0.02)
 HR_ls_halt = Button(LS_HORIZONTAL_RIGHT_STOP, bounce_time=0.02)
 HR_ls_cali = Button(LS_HORIZONTAL_RIGHT_INIT, bounce_time=0.02)
-HL_ls_halt = Button(LS_HORIZONTAL_LEFT_STOP, bounce_time=0.02)
+
+HL_ls_halt = Button(LS_HORIZONTAL_LEFT_STOP, bounce_time=0.02)    #<------------------
+
 HL_ls_cali = Button(LS_HORIZONTAL_LEFT_INIT, bounce_time=0.02)
 
 TR_ls_halt.when_deactivated = lambda: print("Top Right Limit Switch Pressed")
@@ -73,6 +87,17 @@ HR_ls_halt.close()
 HR_ls_cali.close()
 HL_ls_halt.close()
 HL_ls_cali.close()
-
+# Close all devices managed by gpiozero
+Device.close(btn_estop)
+Device.close(TR_ls_halt)
+Device.close(BR_ls_halt)
+Device.close(TL_ls_halt)
+Device.close(BL_ls_halt)
+Device.close(R_ls_cali)
+Device.close(L_ls_cali)
+Device.close(HR_ls_halt)
+Device.close(HR_ls_cali)
+Device.close(HL_ls_halt)
+Device.close(HL_ls_cali)
 
 

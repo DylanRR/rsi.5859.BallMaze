@@ -17,7 +17,7 @@ def moveUntilCondition(motorObj: sMotors.rsiStepMotor, condition, steps, directi
   while not condition():
     motorObj.moveMotor(steps, direction, speed, trackPos, rampOverride)
 
-def moveToCenter(motorObj: sMotors.rsiStepMotor, speed=95):
+def moveToCenter(motorObj: sMotors.rsiStepMotor, speed=98):
 	print("Moving to Center")
 	motorObj.moveMotor(motorObj.getTrackSteps() // 2, True, speed)
 
@@ -27,12 +27,12 @@ def calibrate_horizontal_track():
 	print("Encoders Locked")
 	tempHome = 0
 	tempEnd = None
-	leftSwitch = sLimitSwitches.HL_ls_cali
-	rightSwitch = sLimitSwitches.HR_ls_cali
+	rightSwitch = sLimitSwitches.HL_ls_cali
+	leftSwitch = sLimitSwitches.HR_ls_cali
 
 	sMotors.motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 95, False)
+	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 98, False)
 	sMotors.motor2.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
@@ -42,7 +42,7 @@ def calibrate_horizontal_track():
 	sMotors.motor2.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 95, True)
+	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 98, True)
 	sMotors.motor2.moveMotor(200, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
@@ -72,10 +72,17 @@ def garbageCollection():
 	sLimitSwitches.cleanup()
 
 def main():
+	testCal = False
 	try:
 		while True:
 			checkException()
-			pass
+			if testCal:
+				raise mHaltException("Test Calibration Complete")
+			calibrate_horizontal_track()
+			testCal = True
+			#sMotors.motor2.enableMotor()
+			#sMotors.motor2.moveMotor(1000, False, 95)
+	
 	except KeyboardInterrupt:
 		print("KeyboardInterrupt Triggered Killing the program...")
 		sMotors.disableAllMotors()
@@ -85,6 +92,7 @@ def main():
 		print(e)
 		sMotors.disableAllMotors()
 	finally:
+		sMotors.disableAllMotors()
 		garbageCollection()
 		sys.exit(0)
 
