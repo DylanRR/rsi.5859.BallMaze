@@ -7,4 +7,5 @@ adafruit-python-shell
 RpiMotorLib
 adafruit-circuitpython-pcf8574
 smbus2
+adafruit-circuitpython-mcp3xxx
 

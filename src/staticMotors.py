@@ -26,8 +26,10 @@ halt_reason = ""
 #Disable all motors
 def disableAllMotors(haltReason="Null"):
   global motors_halted, halt_reason
-  for index, motor in enumerate(motors, start=1):
-    motor.haltMotor(f"Motor {index}")
+  motor3.haltMotor("Motor 3")
+  motor1.haltMotor("Motor 1")
+  motor2.haltMotor("Motor 2")
+
   motors_halted = True
   halt_reason = haltReason
 

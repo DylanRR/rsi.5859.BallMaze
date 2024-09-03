@@ -71,6 +71,18 @@ def garbageCollection():
 	sEncoders.cleanup()
 	sLimitSwitches.cleanup()
 
+def devMotorMoveVirt(steps, direction, speed):
+	for i in range(steps):
+		sMotors.motor1.moveMotor(1, direction, speed, True)
+		#sMotors.motor2.moveMotor(1, direction, speed, True)
+		sMotors.motor3.moveMotor(1, direction, speed, True)
+
+
+def devScript():
+	#calibrate_horizontal_track()
+	devMotorMoveVirt(8000, True, 60)
+
+
 def main():
 	testCal = False
 	try:
@@ -78,7 +90,7 @@ def main():
 			checkException()
 			if testCal:
 				raise mHaltException("Test Calibration Complete")
-			calibrate_horizontal_track()
+			devScript()
 			testCal = True
 			#sMotors.motor2.enableMotor()
 			#sMotors.motor2.moveMotor(1000, False, 95)

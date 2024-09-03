@@ -1,0 +1,12 @@
+
+MCP23S17 16-Bit I/O Expander Via SPI
+Chip Link: https://www.mouser.com/ProductDetail/Microchip-Technology/MCP23S17-E-SO?qs=usxtMOJb1RzJScThsWtScg%3D%3D
+Library Link: https://pypi.org/project/RPiMCP23S17/
+
+MCP3008 - 8-Channel 10-Bit ADC With SPI Interface
+Chip Link: https://www.adafruit.com/product/856
+Library Link: https://github.com/adafruit/Adafruit_CircuitPython_MCP3xxx
+
+MCP3202- 2.7V Dual Channel 12-Bit A/D Converter with SPI Serial Interface
+Chip Link: https://www.mouser.com/ProductDetail/Microchip-Technology/MCP3202-CI-ST?qs=9y3LFqDLL8JA0mWShUyD5g%3D%3D&utm_id=8790913657&gad_source=1&gclid=CjwKCAjw59q2BhBOEiwAKc0ijd4dQ_92_jNKa4IIy0UZq8MWakzG8wnUqjbxgtW6iSctbnedpww4ORoChdIQAvD_BwE
+Library Link: https://github.com/adafruit/Adafruit_CircuitPython_MCP3xxx
