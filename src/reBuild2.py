@@ -5,9 +5,15 @@ import staticMotors as sMotors
 import sys
 import time
 
+
+
+
 class mHaltException(Exception):
 	def __init__(self, message):
 		super().__init__(message)
+
+
+
 
 def encoderLocked(locked):
 	sEncoders.encoder1.ISR_LOCK(locked)
