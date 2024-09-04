@@ -90,8 +90,3 @@ class MotorTracking:
   def getm1Val(self):
     return self.__motor1Pot.value
       
-  
-pots = MotorTracking(0, 1)
-while True:
-    print('Raw ADC Value: ', pots.getm1Val())
-    time.sleep(0.5)
