@@ -1,3 +1,4 @@
+SPI
 
 MCP23S17 16-Bit I/O Expander Via SPI
 Chip Link: https://www.mouser.com/ProductDetail/Microchip-Technology/MCP23S17-E-SO?qs=usxtMOJb1RzJScThsWtScg%3D%3D
@@ -10,3 +11,13 @@ Library Link: https://github.com/adafruit/Adafruit_CircuitPython_MCP3xxx
 MCP3202- 2.7V Dual Channel 12-Bit A/D Converter with SPI Serial Interface
 Chip Link: https://www.mouser.com/ProductDetail/Microchip-Technology/MCP3202-CI-ST?qs=9y3LFqDLL8JA0mWShUyD5g%3D%3D&utm_id=8790913657&gad_source=1&gclid=CjwKCAjw59q2BhBOEiwAKc0ijd4dQ_92_jNKa4IIy0UZq8MWakzG8wnUqjbxgtW6iSctbnedpww4ORoChdIQAvD_BwE
 Library Link: https://github.com/adafruit/Adafruit_CircuitPython_MCP3xxx
+
+I2C
+
+ADS1115 - Analog to Digital Converters - ADC 16-bit, 4-ch, I2C125
+Chip Link: https://www.mouser.com/ProductDetail/Texas-Instruments/ADS1115QNKSRQ1?qs=ulEaXIWI0c%252B%252BH1ufhGRAvg%3D%3D
+Library Link: https://docs.circuitpython.org/projects/ads1x15/en/latest/
+
+MCP23017 - Interface - I/O Expanders 16bit Input/Output Exp I2C interface
+Chip Link: https://www.mouser.com/ProductDetail/Microchip-Technology/MCP23017-E-SO?qs=usxtMOJb1Rz8hft7vV7YMQ%3D%3D
+Library Link: https://docs.circuitpython.org/projects/mcp230xx/en/latest/api.html

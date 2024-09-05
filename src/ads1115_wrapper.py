@@ -36,14 +36,14 @@ class ADS_CHANNEL:
     val = self.__analogIn.value
     if self.__smoothing:
       self.__fillBuffer()
-      val = sum(self.__buffer) / len(self.__buffer)
+      val = sum(self.__buffer) // len(self.__buffer) # Average of the buffer using floor division
     return val
   
 
 
 
 
-class MotorTracking:
+class MotorSync:
   def __init__(self, adsObj: ADS1115, m1Tracking_channel, m2Tracking_channel, useSmoothing=False, bufferSize=10):
     self.__smoothing = useSmoothing
     self.__bufferSize = bufferSize
@@ -62,24 +62,57 @@ class MotorTracking:
 
   def calibrate(self):
     # Only call this function when you know that both pots are at their max values
-    self.__m1Tracking.setSmoothing(True, 50)
-    self.__m2Tracking.setSmoothing(True, 50)
+    self.__m1Tracking.setSmoothing(True, 100)
+    self.__m2Tracking.setSmoothing(True, 100)
     self.__m1Max = self.__m1Tracking.getValue()
     self.__m2Max = self.__m2Tracking.getValue()
     self.__m1Tracking.setSmoothing(self.__smoothing, self.__bufferSize)
     self.__m2Tracking.setSmoothing(self.__smoothing, self.__bufferSize)
     self.__offset = self.__m1Max - self.__m2Max
 
-  def getM1Home(self):
-    return (self.__m1Max - self.__sweepLength)
-  def getM2Home(self):
-    return (self.__m2Max - self.__sweepLength)
+  def getDistanceToHome(self):
+    m1_value = self.__m1Tracking.getValue()
+    home_position = self.__m1Max - self.__sweepLength
+    distance_to_home = home_position - m1_value
+    if distance_to_home <= 0:
+        return 0.0
+    return (distance_to_home / self.__sweepLength) * 100
   
-  # Returns the motor that needs to catch up
-  # Lets say 1 is returned that means we need to stop motor 2 and move motor 1
-  # We would than keep rechecking this function until 0 is returned
-  # 0 means both motors are at the same position roughly and we can than move both motors
+  def getDistanceToMax(self):
+    m1_value = self.__m1Tracking.getValue()
+    distance_to_max = self.__m1Max - m1_value
+    if distance_to_max <= 0:
+        return 0.0
+    return (distance_to_max / self.__sweepLength) * 100
 
+  
   # Current Direction: TRUE for UP, FALSE for DOWN
-  def checkDeltaOffset(self, currentDirection):
-    pass
+  def getSyncInstructions(self, currentDirection):
+    m1_value = self.__m1Tracking.getValue()
+    m2_value = self.__m2Tracking.getValue()
+    adjusted_m2_value = m2_value + self.__offset
+    posDelta = m1_value - adjusted_m2_value
+    percentage = (abs(posDelta) / self.__sweepLength) * 100
+    if abs(posDelta) < self.__actOnDelta:
+      return 0, percentage
+    if (posDelta > 0 and currentDirection) or (posDelta < 0 and not currentDirection):
+      #self.__debugPrint(2, m1_value, m2_value, adjusted_m2_value)
+      return 2, percentage
+    else:
+      #self.__debugPrint(1, m1_value, m2_value, adjusted_m2_value)
+      return 1, percentage
+    
+  def isDeSynced(self):
+    m1_value = self.__m1Tracking.getValue()
+    m2_value = self.__m2Tracking.getValue()
+    adjusted_m2_value = m2_value + self.__offset
+    posDelta = m1_value - adjusted_m2_value
+    if abs(posDelta) > self.__actOnDelta:
+      return True
+    return False
+
+    
+    
+  def __debugPrint(self, mNum, m1Val, m2Val, adjM2Val):
+    print("M", mNum ," Needs Catchup   ", end='')
+    print("M1 Real: ", m1Val, "   M2 Real: ", m2Val, "   Offset: ", self.__offset, "   M2 Adjusted: ", adjM2Val)
