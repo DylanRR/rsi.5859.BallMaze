@@ -62,12 +62,12 @@ class MotorSync:
 
   def calibrate(self):
     # Only call this function when you know that both pots are at their max values
-    self.__m1Tracking.setSmoothing(True, 100)
-    self.__m2Tracking.setSmoothing(True, 100)
+    self.__m1Tracking.setSmoothing(True, bufferSize=100)
+    self.__m2Tracking.setSmoothing(True, bufferSize=100)
     self.__m1Max = self.__m1Tracking.getValue()
     self.__m2Max = self.__m2Tracking.getValue()
-    self.__m1Tracking.setSmoothing(self.__smoothing, self.__bufferSize)
-    self.__m2Tracking.setSmoothing(self.__smoothing, self.__bufferSize)
+    self.__m1Tracking.setSmoothing(self.__smoothing, bufferSize=self.__bufferSize)
+    self.__m2Tracking.setSmoothing(self.__smoothing, bufferSize=self.__bufferSize)
     self.__offset = self.__m1Max - self.__m2Max
 
   def getDistanceToHome(self):
