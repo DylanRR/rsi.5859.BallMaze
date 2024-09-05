@@ -12,11 +12,11 @@ SCL_BUS = 3                     #Pin Label: SCL     Wire Color: Purple
 LS_TOP_RIGHT = 4                #Pin Label: 4       Wire Color: Red
 LS_BOTTOM_RIGHT = 5             #Pin Label: 5       Wire Color:Red
 LS_CALIBRATE_RIGHT = 6          #Pin Label: 6       Wire Color:Red
-LS_TOP_LEFT = 7                 #Pin Label: CE1     Wire Color:Red
-LS_BOTTOM_LEFT = 8              #Pin Label: CE0     Wire Color:Red
-LS_CALIBRATE_LEFT = 9           #Pin Label: MISO    Wire Color:Red
-LS_HORIZONTAL_RIGHT_INIT = 10   #Pin Label: MOSI    Wire Color:Red
-LS_HORIZONTAL_RIGHT_STOP = 11   #Pin Label: SCLK    Wire Color:White
+#LS_TOP_LEFT = 7                 #Pin Label: CE1     Wire Color:Red       Diabled and line tapped into GPIO 1 (EEC)
+LS_BOTTOM_LEFT = 1              #Pin Label: CE0     Wire Color:Red        Was Pin 8
+LS_CALIBRATE_LEFT = 2           #Pin Label: MISO    Wire Color:Red        Was Pin 9
+LS_HORIZONTAL_RIGHT_INIT = 3    #Pin Label: MOSI    Wire Color:Red        Was Pin 10  
+LS_HORIZONTAL_RIGHT_STOP = 27   #Pin Label: SCLK    Wire Color:White      Was Pin 11
 
 
 LS_HORIZONTAL_LEFT_INIT = 12    #Pin Label: 12      Wire Color:Red
@@ -49,7 +49,7 @@ btn_estop.when_deactivated = lambda: print("Estop Button Pressed")
 
 TR_ls_halt = Button(LS_TOP_RIGHT, pull_up=True, bounce_time=0.02)
 BR_ls_halt = Button(LS_BOTTOM_RIGHT, pull_up=True, bounce_time=0.02)
-TL_ls_halt = Button(LS_TOP_LEFT, pull_up=True, bounce_time=0.02)
+#TL_ls_halt = Button(LS_TOP_LEFT, pull_up=True, bounce_time=0.02)
 BL_ls_halt = Button(LS_BOTTOM_LEFT, pull_up=True, bounce_time=0.02)
 R_ls_cali = Button(LS_CALIBRATE_RIGHT, pull_up=True, bounce_time=0.02)
 L_ls_cali = Button(LS_CALIBRATE_LEFT, pull_up=True, bounce_time=0.02)
@@ -61,7 +61,7 @@ HL_ls_halt = Button(LS_HORIZONTAL_LEFT_STOP, bounce_time=0.02)    #<------------
 HL_ls_cali = Button(LS_HORIZONTAL_LEFT_INIT, bounce_time=0.02)
 
 TR_ls_halt.when_deactivated = lambda: print("Top Right Limit Switch Pressed")
-TL_ls_halt.when_deactivated = lambda: print("Top Left Limit Switch Pressed")
+#TL_ls_halt.when_deactivated = lambda: print("Top Left Limit Switch Pressed")
 BR_ls_halt.when_deactivated = lambda: print("Bottom Right Limit Switch Pressed")
 BL_ls_halt.when_deactivated = lambda: print("Bottom Left Limit Switch Pressed")
 R_ls_cali.when_deactivated = lambda: print("Right Calibration Limit Switch Pressed")
@@ -78,7 +78,7 @@ input("Press Enter End Test...")
 btn_estop.close()
 TR_ls_halt.close()
 BR_ls_halt.close()
-TL_ls_halt.close()
+#TL_ls_halt.close()
 BL_ls_halt.close()
 R_ls_cali.close()
 L_ls_cali.close()

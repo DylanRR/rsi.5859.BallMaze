@@ -1,7 +1,5 @@
 from gpiozero import DigitalOutputDevice
 from time import sleep
-import os
-import sys
 
 
 class rsiStepMotor:
@@ -17,13 +15,12 @@ class rsiStepMotor:
     self.__mDir = DigitalOutputDevice(dirPin, active_high=True, initial_value=False)
     self.__mEnable = DigitalOutputDevice(enablePin, active_high=True, initial_value=False)
 
-    self.__stepIncrement = 5
+    self.__stepIncrement = 1
     self.__stepDelay = 0.01
-    self.__stepIncrement = 5
     self.__rampingPower = None
     self.__currentRampPower = 0
-    self.__internalMaxDelay = 0.0001
-    self.__internalMinDelay = 0.01
+    self.__internalMaxDelay = 0.00009
+    self.__internalMinDelay = 0.009
     self.__motorMoving = False
     self.__exitMove = False
   

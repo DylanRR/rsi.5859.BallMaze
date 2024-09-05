@@ -8,4 +8,6 @@ RpiMotorLib
 adafruit-circuitpython-pcf8574
 smbus2
 adafruit-circuitpython-mcp3xxx
+adafruit-circuitpython-ads1x15
+adafruit-circuitpython-mcp230xx
 

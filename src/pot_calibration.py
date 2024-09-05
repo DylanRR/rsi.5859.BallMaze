@@ -10,7 +10,7 @@ CE0_PIN = board.D8  # GPIO pin for CE0
 CE1_PIN = board.D7  # GPIO pin for CE1
 
 # Predefined number of steps for a full sweep
-SWEEP_LENGTH = 10000
+SWEEP_LENGTH = 37000
 
 class MotorTracking:
   def __init__(self, motor1PotChannel, motor2PotChannel, chipSelect=CE0_PIN):
@@ -26,7 +26,7 @@ class MotorTracking:
     self.__m2RelativeMax = 0
     self.__m1RelativeMin = 0
     self.__m2RelativeMin = 0
-    self.__actOnDelta = 50  # Minimum change in ADC value to act on
+    self.__actOnDelta = 2000  # Minimum change in ADC value to act on
   
   def __del__(self):
     self.close()
@@ -83,10 +83,18 @@ class MotorTracking:
     if abs(posDelta) < self.__actOnDelta:
       return 0
     if (posDelta > 0 and currentDirection) or (posDelta < 0 and not currentDirection):
+      print("m2 needs catchup - posDelta: ", posDelta, "   Direction: ", currentDirection)
       return 2
     else:
+      print("m1 needs catchup - posDelta: ", posDelta, "   Direction: ", currentDirection)
       return 1
   
   def getm1Val(self):
     return self.__motor1Pot.value
+  def getm2Val(self):
+    return self.__motor2Pot.value
+  def getm1RelVal(self):
+    return self.__m1RelativePosition
+  def getm2RelVal(self):
+    return self.__m2RelativePosition
       
