@@ -11,18 +11,18 @@ class haltingLimitSwitch:
     self.pin = pin
     self.objName = name
     self.switch = Button(pin, pull_up=pullUp, bounce_time=bounceTime)
-    self.switch.when_deactivated = self.__haultMotor
+    self.switch.when_deactivated = self.__haltMotor
 
   def __del__(self):
     self.close()
   def close(self):
     self.switch.close()
 
-  def __haultMotor(self):
+  def __haltMotor(self):
     sMotor.disableAllMotors(self.objName)
 
   def triggerHaltEvent(self):
-    self.__haultMotor()
+    self.__haltMotor()
 
 
 class limitSwitch:

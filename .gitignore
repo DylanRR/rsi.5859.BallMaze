@@ -1,4 +1,12 @@
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore virtual environment directories
 venv/
-raspi-blinka.py
-src/__pycache__/rsiEncoder.cpython-311.pyc
-src/__pycache__/rsiEncoder.cpython-311.pyc
+env/
+
+# Ignore other common files and directories
+.DS_Store
+.idea/
+.vscode/

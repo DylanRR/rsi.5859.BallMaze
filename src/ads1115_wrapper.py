@@ -26,8 +26,7 @@ class ADS_CHANNEL:
       if self.__buffer is None:
         self.__buffer = collections.deque(maxlen=self.__bufferSize)
       else:
-        self.__buffer.clear()
-        self.__buffer.maxlen = self.__bufferSize
+        self.__buffer = collections.deque(self.__buffer, maxlen=self.__bufferSize)
     else:
       self.__buffer = None
 
