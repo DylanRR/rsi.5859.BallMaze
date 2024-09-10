@@ -5,7 +5,7 @@ import staticMotors as sMotors
 import sys
 from pot_calibration import MotorTracking as mTrack
 import time
-
+import staticChips as sChips
 
 pCal = mTrack(sVars.m1McpChannel, sVars.m2McpChannel)
 
@@ -144,6 +144,51 @@ def garbageCollection():
 	sMotors.cleanup()
 	sEncoders.cleanup()
 	sLimitSwitches.cleanup()
+
+def checkSync(current_direction):
+	behind_motor, moveInstruction = sChips.mSync.getSyncInstructions()
+	#Guarding statement in case things have changed since calling isDeSynced
+	if behind_motor == 0:
+		return
+
+	if behind_motor == 1:			#Motor 1 needs to catchup 
+		steps = sMotors.motor1.getTrackSteps() * (moveInstruction / 100)
+		if current_direction:
+			sMotors.motor1.moveMotor(steps, True, 60)
+		else:
+			sMotors.motor1.moveMotor(steps, False, 60)
+	else:											#Motor 3 needs to catchup
+		steps = sMotors.motor3.getTrackSteps() * (moveInstruction / 100)
+		if current_direction:
+			sMotors.motor3.moveMotor(steps, True, 60)
+		else:
+			sMotors.motor3.moveMotor(steps, False, 60)
+
+	#Recursively call checkSync until we are synced
+	if sChips.mSync.isDeSynced():
+		checkSync()
+
+
+
+def devIR_RUN_STATE():
+	e1_state = sEncoders.encoder1.isEncoderRunning()
+	e2_state = sEncoders.encoder2.isEncoderRunning()
+	#Encoder 1 = Vertical movement       Encoder 2 = Horizontal movement
+	if e1_state & e2_state:
+		while sEncoders.encoder1.isEncoderRunning() & sEncoders.encoder2.isEncoderRunning():
+			sMotors.motor2.moveMotor(1, sEncoders.encoder2.direction, sEncoders.encoder2.getSpeed())
+			e1_dir = sEncoders.encoder1.direction
+			e1_speed = sEncoders.encoder1.getSpeed()
+			sMotors.motor1.moveMotor(1, e1_dir, e1_speed)
+			sMotors.motor3.moveMotor(1, e1_dir, e1_speed)
+			if sChips.mSync.isDeSynced():
+				checkSync()
+	else if
+	
+
+
+
+
 
 
 #	Every 5 steps we check for a delta offset and adjust the motors accordingly.
