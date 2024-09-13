@@ -20,7 +20,7 @@ class rsiStepMotor:
     self.__rampingPower = None
     self.__currentRampPower = 0
     self.__internalMaxDelay = 0.00009
-    self.__internalMinDelay = 0.009
+    self.__internalMinDelay = 0.003
     self.__motorMoving = False
     self.__exitMove = False
   

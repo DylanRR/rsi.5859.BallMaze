@@ -41,7 +41,7 @@ def calibrate_horizontal_track():
 
 	sMotors.motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 96, False)
+	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 90, False)
 	sMotors.motor2.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
@@ -51,7 +51,7 @@ def calibrate_horizontal_track():
 	sMotors.motor2.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 96, True)
+	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 90, True)
 	sMotors.motor2.moveMotor(200, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
@@ -80,12 +80,12 @@ def calibrate_vertical_track():
 #Move the motors until first LS is hit
 	while not tempL or not tempR:
 		if not leftSwitch.getFirstCalibration():
-			sMotors.motor1.moveMotor(1, True, 92)
+			sMotors.motor1.moveMotor(1, True, 90)
 		else:
 			print ("Left Switch Hit")
 			tempL = True
 		if not rightSwitch.getFirstCalibration():
-			sMotors.motor3.moveMotor(1, True, 92)	
+			sMotors.motor3.moveMotor(1, True, 90)	
 		else:
 			print ("Right Switch Hit")
 			tempR = True
@@ -186,18 +186,27 @@ def devScript():
 	#devVerticalMotorMove(12000, False, 98)
 	input("Press Enter to continue...")  # Pause and wait for user input
 	testStep = sMotors.motor2.getTrackSteps()-200
-	devVertMoveNoCal(testStep, False, 97)
+	devVertMoveNoCal(testStep, False, 99)
 	#moveToHome(sMotors.motor2)
 
+def devScript2():
+	while True:
+		input("Press Enter to Enable Motor 2...")  # Pause and wait for user input
+		sMotors.motor2.enableMotor()
+		input("Press Enter to Disable Motor 2...")  # Pause and wait for user input
+		sMotors.motor2.disableMotor()
 
 def main():
+
 	testCal = False
 	try:
 		while True:
 			checkException()
 			if testCal:
 				raise mHaltException("Test Calibration Complete")
+			#sMotors.motor2.enableMotor()
 			devScript()
+			#devScript2()
 			testCal = True
 			#sMotors.motor2.enableMotor()
 			#sMotors.motor2.moveMotor(1000, False, 95)

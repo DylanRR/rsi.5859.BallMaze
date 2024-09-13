@@ -113,10 +113,11 @@ def moveVirtual(step, direction, speed):
 
 
 def main():
-  moveVirtual(6000, False, 98)
-  #motor2.enableMotor()
+  #moveVirtual(6000, False, 98)
+  motor2.enableMotor()
+  sleep(3)
   #motor2.moveMotor(4000, True, 95, False)
-  #motor2.disableMotor()
+  motor2.disableMotor()
 
   #motor1.enableMotor()
   #motor1.moveMotor(20, True, 10, False)
