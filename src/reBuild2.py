@@ -3,11 +3,20 @@ import staticEncoders as sEncoders
 import staticLimitSwitches as sLimitSwitches
 import staticMotors as sMotors
 import sys
-from pot_calibration import MotorTracking as mTrack
+#from pot_calibration import MotorTracking as mTrack
 import time
-import staticChips as sChips
+#import staticChips as sChips
+from adafruit_ads1x15.ads1115 import ADS1115
+import ads1115_wrapper
+import board
+import busio
 
-pCal = mTrack(sVars.m1McpChannel, sVars.m2McpChannel)
+
+# Initialize the I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
+ads = ADS1115(i2c, address=0x48)
+mSync = ads1115_wrapper.MotorSync(ads, 0, 1)
+
 
 class mHaltException(Exception):
 	def __init__(self, message):
@@ -122,9 +131,7 @@ def calibrate_vertical_track():
 	
 	print("Second Back Off Complete....")
 
-	pCal.calibrate()
-	print ("m1 Relative Val: ", pCal.getm1RelVal())
-	print ("m2 Relative Val: ", pCal.getm2RelVal())
+	mSync.calibrate()
 	print("Calibration Complete....")
 	encoderLocked(False)
 
@@ -146,7 +153,7 @@ def garbageCollection():
 	sLimitSwitches.cleanup()
 
 def checkSync(current_direction):
-	behind_motor, moveInstruction = sChips.mSync.getSyncInstructions()
+	behind_motor, moveInstruction = mSync.getSyncInstructions()
 	#Guarding statement in case things have changed since calling isDeSynced
 	if behind_motor == 0:
 		return
@@ -165,7 +172,7 @@ def checkSync(current_direction):
 			sMotors.motor3.moveMotor(steps, False, 60)
 
 	#Recursively call checkSync until we are synced
-	if sChips.mSync.isDeSynced():
+	if mSync.isDeSynced():
 		checkSync()
 
 
@@ -174,7 +181,7 @@ def devTestMotorSync(steps, direction, speed):
 	for i in range(steps):
 		sMotors.motor1.moveMotor(1, direction, speed)
 		sMotors.motor3.moveMotor(1, direction, speed)
-		if sChips.mSync.isDeSynced():
+		if mSync.isDeSynced():
 			checkSync(direction)
 
 
@@ -190,7 +197,7 @@ def devIR_RUN_STATE():
 			e1_speed = sEncoders.encoder1.getSpeed()
 			sMotors.motor1.moveMotor(1, e1_dir, e1_speed)
 			sMotors.motor3.moveMotor(1, e1_dir, e1_speed)
-			if sChips.mSync.isDeSynced():
+			if mSync.isDeSynced():
 				checkSync()
 	elif e1_state:
 		pass
@@ -199,33 +206,6 @@ def devIR_RUN_STATE():
 	
 
 
-
-
-
-
-#	Every 5 steps we check for a delta offset and adjust the motors accordingly.
-#	If the motors do require adjustment we will continue to adjust them 
-# with every step until the motors are back in sync.
-def devVerticalMotorMove(steps, direction, speed):
-	requireCalibration = False
-	for i in range(steps):
-		if ((i + 1) % 100 == 0) or requireCalibration:
-			temp = pCal.checkForDeltaOffset(direction)
-			if temp == 1:
-				requireCalibration = True
-				#print("Adjusting Motors")
-				sMotors.motor1.moveMotor(1, direction, speed, True)
-			elif temp == 2:
-				requireCalibration = True
-				#print("Adjusting Motors")
-				sMotors.motor3.moveMotor(1, direction, speed, True)
-			else:
-				requireCalibration = False
-				sMotors.motor1.moveMotor(1, direction, speed, True)
-				sMotors.motor3.moveMotor(1, direction, speed, True)
-		else:
-			sMotors.motor1.moveMotor(1, direction, speed, True)
-			sMotors.motor3.moveMotor(1, direction, speed, True)
 
 def devVertMoveNoCal(steps, direction, speed):
 	m2Dir = not direction

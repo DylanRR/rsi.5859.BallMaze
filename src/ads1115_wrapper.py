@@ -46,7 +46,6 @@ class MotorSync:
   def __init__(self, adsObj: ADS1115, m1Tracking_channel, m2Tracking_channel, useSmoothing=False, bufferSize=10):
     self.__smoothing = useSmoothing
     self.__bufferSize = bufferSize
-
     self.__m1Tracking = ADS_CHANNEL(adsObj, m1Tracking_channel, useSmoothing, bufferSize)
     self.__m2Tracking = ADS_CHANNEL(adsObj, m2Tracking_channel, useSmoothing, bufferSize)
     self.__m1Max = 0

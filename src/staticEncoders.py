@@ -1,11 +1,10 @@
 from encoderv2 import Encoder
 
 
-ENCODER_1_A = 14                #Pin Label: TXD     Wire Color:Brown
-ENCODER_1_B = 15                #Pin Label: RXD     Wire Color:White
-
-ENCODER_2_A = 16                #Pin Label: 16      Wire Color:Brown
-ENCODER_2_B = 17                #Pin Label: 17      Wire Color:White
+ENCODER_1_A = 16                #Pin Label: 16      Wire Color:Blue/Green
+ENCODER_1_B = 12                #Pin Label: 12      Wire Color:White/Orange
+ENCODER_2_A = 21                #Pin Label: 21      Wire Color:Blue/Purple
+ENCODER_2_B = 20                #Pin Label: 20      Wire Color:White/Blue
 
 # Initialize Encoders
 encoder1 = Encoder(ENCODER_1_A, ENCODER_1_B)
