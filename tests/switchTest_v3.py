@@ -1,5 +1,7 @@
 from gpiozero import Button, DigitalOutputDevice
 
+ENABLE_MOTROR_TESTS = True
+
 #GPIO PI Pins
 BTN_ESTOP = 4                   #Pin Label: 4       Wire Color: Black
 SDA_BUS = 2                     #Pin Label: SDA     Wire Color: Orange
@@ -73,22 +75,22 @@ motor_map = {
     "2": {"enable": m2Enable, "direction": m2Direction, "step": m2Step},
     "3": {"enable": m3Enable, "direction": m3Direction, "step": m3Step}
 }
-
-while True:
-  uInput = input("Enter a Motor Number to Test OR Enter 'q' to Quit: ")
-  if uInput == "q":
-    break
-  elif uInput in motor_map:
-    uInput2 = input("Enter 1 = Enable, 2 = Direction, 3 = Step: ")
-    action_map = {"1": "enable", "2": "direction", "3": "step"}
-    if uInput2 in action_map:
-      motor = motor_map[uInput][action_map[uInput2]]
-      if motor.value == 0:
-        motor.on()
-        print(f"Motor {uInput} {action_map[uInput2].capitalize()} On")
-      else:
-        motor.off()
-        print(f"Motor {uInput} {action_map[uInput2].capitalize()} Off")
+if (ENABLE_MOTROR_TESTS):
+  while True:
+    uInput = input("Enter a Motor Number to Test OR Enter 'q' to Quit: ")
+    if uInput == "q":
+      break
+    elif uInput in motor_map:
+      uInput2 = input("Enter 1 = Enable, 2 = Direction, 3 = Step: ")
+      action_map = {"1": "enable", "2": "direction", "3": "step"}
+      if uInput2 in action_map:
+        motor = motor_map[uInput][action_map[uInput2]]
+        if motor.value == 0:
+          motor.on()
+          print(f"Motor {uInput} {action_map[uInput2].capitalize()} On")
+        else:
+          motor.off()
+          print(f"Motor {uInput} {action_map[uInput2].capitalize()} Off")
 
 
 # Wait for user to press Enter to quit

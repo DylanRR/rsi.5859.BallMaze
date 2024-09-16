@@ -170,6 +170,15 @@ def checkSync(current_direction):
 
 
 
+def devTestMotorSync(steps, direction, speed):
+	for i in range(steps):
+		sMotors.motor1.moveMotor(1, direction, speed)
+		sMotors.motor3.moveMotor(1, direction, speed)
+		if sChips.mSync.isDeSynced():
+			checkSync(direction)
+
+
+
 def devIR_RUN_STATE():
 	e1_state = sEncoders.encoder1.isEncoderRunning()
 	e2_state = sEncoders.encoder2.isEncoderRunning()
@@ -183,7 +192,10 @@ def devIR_RUN_STATE():
 			sMotors.motor3.moveMotor(1, e1_dir, e1_speed)
 			if sChips.mSync.isDeSynced():
 				checkSync()
-	else if
+	elif e1_state:
+		pass
+	elif e2_state:
+		pass
 	
 
 
@@ -231,7 +243,8 @@ def devScript():
 	#devVerticalMotorMove(12000, False, 98)
 	input("Press Enter to continue...")  # Pause and wait for user input
 	testStep = sMotors.motor2.getTrackSteps()-200
-	devVertMoveNoCal(testStep, False, 99)
+	devTestMotorSync(testStep, False, 99)
+	#devVertMoveNoCal(testStep, False, 99)
 	#moveToHome(sMotors.motor2)
 
 def devScript2():
