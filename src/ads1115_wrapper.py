@@ -51,8 +51,14 @@ class MotorSync:
     self.__m1Max = 0
     self.__m2Max = 0
     self.__offset = 0
-    self.__sweepLength = 37000
-    self.__actOnDelta = 2000  # Minimum change in ADC value to act on
+    self.__sweepLength = 5000
+    self.__actOnDelta = 200  # Minimum change in ADC value to act on
+  
+  def isCalibrationComplete(self):
+    if self.__m2Tracking.getValue() > (self.__m2Max - self.__sweepLength):
+      return True
+    return False
+    
   
   def close(self):
     self.__m1Tracking.close()

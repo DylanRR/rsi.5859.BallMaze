@@ -10,6 +10,7 @@ from adafruit_ads1x15.ads1115 import ADS1115
 import ads1115_wrapper
 import board
 import busio
+import traceback
 
 
 # Initialize the I2C bus
@@ -89,12 +90,12 @@ def calibrate_vertical_track():
 #Move the motors until first LS is hit
 	while not tempL or not tempR:
 		if not leftSwitch.getFirstCalibration():
-			sMotors.motor1.moveMotor(1, True, 90)
+			sMotors.motor1.moveMotor(1, True, 90, False)
 		else:
 			print ("Left Switch Hit")
 			tempL = True
 		if not rightSwitch.getFirstCalibration():
-			sMotors.motor3.moveMotor(1, True, 90)	
+			sMotors.motor3.moveMotor(1, True, 90, False)	
 		else:
 			print ("Right Switch Hit")
 			tempR = True
@@ -102,8 +103,8 @@ def calibrate_vertical_track():
 
 #Back off the motors slowly
 	for _ in range(300):
-		sMotors.motor1.moveMotor(1, False, 60)
-		sMotors.motor3.moveMotor(1, False, 60)
+		sMotors.motor1.moveMotor(1, False, 60, False)
+		sMotors.motor3.moveMotor(1, False, 60, False)
 
 	leftSwitch.setLockedOut(False)
 	rightSwitch.setLockedOut(False)
@@ -115,11 +116,11 @@ def calibrate_vertical_track():
 	tempR = False
 	while not tempL or not tempR:
 		if not leftSwitch.getSecondCalibration():
-			sMotors.motor1.moveMotor(1, True, 60)
+			sMotors.motor1.moveMotor(1, True, 60, False)
 		else:
 			tempL = True
 		if not rightSwitch.getSecondCalibration():
-			sMotors.motor3.moveMotor(1, True, 60)
+			sMotors.motor3.moveMotor(1, True, 60, False)
 		else:
 			tempR = True
 	print("Second Calibration hit Complete....")
@@ -132,6 +133,19 @@ def calibrate_vertical_track():
 	print("Second Back Off Complete....")
 
 	mSync.calibrate()
+	sMotors.motor1.overWriteCurrentPosition(0)
+	sMotors.motor3.overWriteCurrentPosition(0)
+	while mSync.isCalibrationComplete():
+		sMotors.motor1.moveMotor(1, False, 100, True)
+		sMotors.motor3.moveMotor(1, False, 100, True)
+
+	tempEnd1 = sMotors.motor1.getCurrentPosition()
+	tempEnd2 = sMotors.motor3.getCurrentPosition()
+	tempEnd = (tempEnd1 + tempEnd2) // 2
+
+	sMotors.motor1.calibrateTrack(0, tempEnd)
+	sMotors.motor3.calibrateTrack(0, tempEnd)
+
 	print("Calibration Complete....")
 	encoderLocked(False)
 
@@ -153,23 +167,23 @@ def garbageCollection():
 	sLimitSwitches.cleanup()
 
 def checkSync(current_direction):
-	behind_motor, moveInstruction = mSync.getSyncInstructions()
+	behind_motor, moveInstruction = mSync.getSyncInstructions(current_direction)
 	#Guarding statement in case things have changed since calling isDeSynced
 	if behind_motor == 0:
 		return
 
 	if behind_motor == 1:			#Motor 1 needs to catchup 
-		steps = sMotors.motor1.getTrackSteps() * (moveInstruction / 100)
+		steps = round(sMotors.motor1.getTrackSteps() * (moveInstruction / 100))
 		if current_direction:
-			sMotors.motor1.moveMotor(steps, True, 60)
+			sMotors.motor1.moveMotor(steps, True, 40)
 		else:
-			sMotors.motor1.moveMotor(steps, False, 60)
+			sMotors.motor1.moveMotor(steps, False, 40)
 	else:											#Motor 3 needs to catchup
-		steps = sMotors.motor3.getTrackSteps() * (moveInstruction / 100)
+		steps = round(sMotors.motor3.getTrackSteps() * (moveInstruction / 100))
 		if current_direction:
-			sMotors.motor3.moveMotor(steps, True, 60)
+			sMotors.motor3.moveMotor(steps, True, 40)
 		else:
-			sMotors.motor3.moveMotor(steps, False, 60)
+			sMotors.motor3.moveMotor(steps, False, 40)
 
 	#Recursively call checkSync until we are synced
 	if mSync.isDeSynced():
@@ -181,8 +195,9 @@ def devTestMotorSync(steps, direction, speed):
 	for i in range(steps):
 		sMotors.motor1.moveMotor(1, direction, speed)
 		sMotors.motor3.moveMotor(1, direction, speed)
-		if mSync.isDeSynced():
-			checkSync(direction)
+		if i % 100 == 0:
+			if mSync.isDeSynced():
+				checkSync(direction)
 
 
 
@@ -217,13 +232,13 @@ def devVertMoveNoCal(steps, direction, speed):
 
 
 def devScript():
-	calibrate_horizontal_track()
+	#calibrate_horizontal_track()
 	#devVerticalMotorMove(8000, True, 60)
 	calibrate_vertical_track()
 	#devVerticalMotorMove(12000, False, 98)
 	input("Press Enter to continue...")  # Pause and wait for user input
-	testStep = sMotors.motor2.getTrackSteps()-200
-	devTestMotorSync(testStep, False, 99)
+	#testStep = sMotors.motor2.getTrackSteps()-200
+	devTestMotorSync(2000, True, 90)
 	#devVertMoveNoCal(testStep, False, 99)
 	#moveToHome(sMotors.motor2)
 
@@ -255,8 +270,9 @@ def main():
 	except mHaltException as lsObj:
 		print(f"Stoppage Triggered By: {lsObj}")
 	except Exception as e:
-		print(e)
 		sMotors.disableAllMotors()
+		print(e)
+		traceback.print_exc()
 	finally:
 		sMotors.disableAllMotors()
 		garbageCollection()

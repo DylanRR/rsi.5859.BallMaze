@@ -175,5 +175,3 @@ class rsiStepMotor:
       self.__checkForExit()
     self.__exitMove = False
     self.__motorMoving = False
-
-  
