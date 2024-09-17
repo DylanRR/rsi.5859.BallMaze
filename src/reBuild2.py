@@ -11,6 +11,7 @@ import ads1115_wrapper
 import board
 import busio
 import traceback
+import threading
 
 
 # Initialize the I2C bus
@@ -30,15 +31,6 @@ def encoderLocked(locked):
 def moveUntilCondition(motorObj: sMotors.rsiStepMotor, condition, steps, direction, speed, trackPos=True, rampOverride=False):
   while not condition():
     motorObj.moveMotor(steps, direction, speed, trackPos, rampOverride)
-
-
-def moveToCenter(motorObj: sMotors.rsiStepMotor, speed=97):
-	print("Moving to Center")
-	motorObj.moveMotor(motorObj.getTrackSteps() // 2, True, speed)
-
-def moveToHome(motorObj: sMotors.rsiStepMotor, speed=97):
-	print("Moving to Home")
-	motorObj.moveMotor(motorObj.getTrackSteps()-200, True, speed)
 
 def calibrate_horizontal_track():
 	print("Entered Calibration Mode....")
@@ -71,7 +63,6 @@ def calibrate_horizontal_track():
 	tempEnd = sMotors.motor2.getCurrentPosition()
 
 	sMotors.motor2.calibrateTrack(tempHome, tempEnd)
-	#moveToCenter(sMotors.motor2)
 	print("Calibration Complete....")
 	encoderLocked(False)
 
@@ -150,13 +141,6 @@ def calibrate_vertical_track():
 	encoderLocked(False)
 
 
-
-
-def IR_RUN_STATE():
-	if sEncoders.encoder2.isEncoderRunning():
-		while sEncoders.encoder2.isEncoderRunning():
-			sMotors.motor2.moveMotor(sMotors.motor2.getStepIncrement(), sEncoders.encoder2.direction, sEncoders.encoder2.getSpeed())
-			
 def checkException():
 	if sMotors.motors_halted:
 		raise mHaltException(sMotors.halt_reason)
@@ -189,8 +173,6 @@ def checkSync(current_direction):
 	if mSync.isDeSynced():
 		checkSync()
 
-
-
 def devTestMotorSync(steps, direction, speed):
 	for i in range(steps):
 		sMotors.motor1.moveMotor(1, direction, speed)
@@ -218,51 +200,83 @@ def devIR_RUN_STATE():
 		pass
 	elif e2_state:
 		pass
-	
+
+def run_in_thread():
+	sMotors.motor2.moveUntilCondition(lambda: sEncoders.encoder2.isEncoderRunning(), sEncoders.encoder2.direction, sEncoders.encoder2.getSpeed())
+
+def run_in_second_thread():
+	while sEncoders.encoder1.isEncoderRunning():
+		sMotors.motor1.moveMotor(1, sEncoders.encoder1.direction, sEncoders.encoder1.getSpeed())
+		sMotors.motor3.moveMotor(1, sEncoders.encoder1.direction, sEncoders.encoder1.getSpeed())
+
+# Main function to manage threads
+def IR_RUN_STATE():
+	thread_e1 = None
+	thread_e2 = None
+	lock = threading.Lock()
+
+	while True:
+		e1_state = sEncoders.encoder1.isEncoderRunning()
+		e2_state = sEncoders.encoder2.isEncoderRunning()
+
+		if not e1_state and not e2_state:
+			break
+
+		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
+			thread_e1 = threading.Thread(target=run_in_second_thread)
+			thread_e1.start()
+
+		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
+			thread_e2 = threading.Thread(target=run_in_thread)
+			thread_e2.start()
+
+		if thread_e1 and thread_e1.is_alive():
+			with lock:
+				tempDir = sEncoders.encoder1.direction
+				tempSpeed = sEncoders.encoder1.getSpeed()
+				sMotors.motor1.setDirection(tempDir)
+				sMotors.motor1.setPower(tempSpeed)
+				sMotors.motor3.setDirection(tempDir)
+				sMotors.motor3.setPower(tempSpeed)
+
+		if thread_e2 and thread_e2.is_alive():
+			with lock:
+				sMotors.motor2.setDirection(sEncoders.encoder2.direction)
+				sMotors.motor2.setPower(sEncoders.encoder2.getSpeed())
+
+		time.sleep(0.01)  # Prevents the CPU from being overloaded
+
+	# Ensure threads are properly joined
+	if thread_e1:
+		thread_e1.join()
+	if thread_e2:
+		thread_e2.join()
 
 
-
-def devVertMoveNoCal(steps, direction, speed):
-	m2Dir = not direction
+def devMoveAllToCenter():
+	steps = sMotors.motor2.getTrackSteps() // 2
 	for _ in range(steps):
-		sMotors.motor1.moveMotor(1, direction, speed, True)
-		sMotors.motor2.moveMotor(1, m2Dir, speed, True)
-		sMotors.motor3.moveMotor(1, direction, speed, True)
-			
-
+		sMotors.motor2.moveMotor(1, True, 85)
+		sMotors.motor1.moveMotor(1, True, 85)
+		sMotors.motor3.moveMotor(1, True, 85)
 
 def devScript():
-	#calibrate_horizontal_track()
-	#devVerticalMotorMove(8000, True, 60)
+	calibrate_horizontal_track()
 	calibrate_vertical_track()
-	#devVerticalMotorMove(12000, False, 98)
+	devMoveAllToCenter()
 	input("Press Enter to continue...")  # Pause and wait for user input
-	#testStep = sMotors.motor2.getTrackSteps()-200
-	devTestMotorSync(2000, True, 90)
-	#devVertMoveNoCal(testStep, False, 99)
-	#moveToHome(sMotors.motor2)
-
-def devScript2():
 	while True:
-		input("Press Enter to Enable Motor 2...")  # Pause and wait for user input
-		sMotors.motor2.enableMotor()
-		input("Press Enter to Disable Motor 2...")  # Pause and wait for user input
-		sMotors.motor2.disableMotor()
+		IR_RUN_STATE()
 
 def main():
-
 	testCal = False
 	try:
 		while True:
 			checkException()
 			if testCal:
 				raise mHaltException("Test Calibration Complete")
-			#sMotors.motor2.enableMotor()
 			devScript()
-			#devScript2()
 			testCal = True
-			#sMotors.motor2.enableMotor()
-			#sMotors.motor2.moveMotor(1000, False, 95)
 	
 	except KeyboardInterrupt:
 		print("KeyboardInterrupt Triggered Killing the program...")

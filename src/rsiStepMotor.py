@@ -131,7 +131,7 @@ class rsiStepMotor:
     if not self.__rampingPower:
         return
     difference = self.__power - self.__currentRampPower
-    adjustment = difference * 0.01  # 5% of the difference
+    adjustment = difference * 0.01  # 5% of the difference    <--- This is the ramping rate
 
     # Update the current ramp power without overshooting
     if abs(adjustment) < 0.01:
@@ -161,7 +161,6 @@ class rsiStepMotor:
     self.setPower(power, not overRideRamp)
     self.__motorMoving = True
     self.__exitMove = False
-    #print(f"Moving Motor {steps} steps in {'Clockwise' if clockwise else 'Counter Clockwise'} power: {power} stepDelay: {self.__stepDelay}")
     for i in range(steps):
       if self.__exitMove:
         break
@@ -174,4 +173,18 @@ class rsiStepMotor:
       self.__updatePower()
       self.__checkForExit()
     self.__exitMove = False
+    self.__motorMoving = False
+
+  def moveUntilCondition(self, condition, clockwise, power=50, trackPos=True):
+    self.setDirection(clockwise)
+    self.setPower(power)
+    self.__motorMoving = True
+    while not condition():
+      self.__mStep.on()
+      sleep(self.__stepDelay)
+      self.__mStep.off()
+      sleep(self.__stepDelay)
+      if trackPos:
+        self.__currentPosition += -1 if clockwise else 1
+      self.__updatePower()
     self.__motorMoving = False
