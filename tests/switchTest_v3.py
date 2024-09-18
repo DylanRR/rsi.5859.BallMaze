@@ -1,7 +1,7 @@
 from gpiozero import Button, DigitalOutputDevice
 
 ENABLE_MOTROR_TESTS = True
-3
+
 #GPIO PI Pins
 BTN_ESTOP = 4                   #Pin Label: 4       Wire Color: Black
 SDA_BUS = 2                     #Pin Label: SDA     Wire Color: Orange
@@ -14,8 +14,8 @@ LS_BOTTOM_LEFT = 11             #Pin Label: SCLK    Wire Color:Gray
 LS_CALIBRATE_LEFT = 0           #Pin Label: ID_SD   Wire Color:Blue
 LS_HORIZONTAL_RIGHT_INIT = 17   #Pin Label: 17      Wire Color:Blue
 LS_HORIZONTAL_RIGHT_STOP = 27   #Pin Label: 27      Wire Color:Green
-LS_HORIZONTAL_LEFT_INIT = 13    #Pin Label: 13      Wire Color:Gray
-LS_HORIZONTAL_LEFT_STOP = 6     #Pin Label: 6       Wire Color:Brown
+LS_HORIZONTAL_LEFT_INIT = 19    #Pin Label: 13      Wire Color:Gray
+LS_HORIZONTAL_LEFT_STOP = 26     #Pin Label: 6       Wire Color:Brown
 ENCODER_1_A = 16                #Pin Label: 16      Wire Color:Blue/Green
 ENCODER_1_B = 12                #Pin Label: 12      Wire Color:White/Orange
 ENCODER_2_A = 21                #Pin Label: 21      Wire Color:Blue/Purple
@@ -31,17 +31,17 @@ MOTOR_3_DIRECTION = 7           #Pin Label: CE1     Wire Color:Green
 MOTOR_3_STEP = 1                #Pin Label: EEC     Wire Color:Brown
 
 
-btn_estop = Button(BTN_ESTOP, pull_up=True, bounce_time=0.02)
-TR_ls_halt = Button(LS_TOP_RIGHT, pull_up=True, bounce_time=0.02)
-BR_ls_halt = Button(LS_BOTTOM_RIGHT, pull_up=True, bounce_time=0.02)
-TL_ls_halt = Button(LS_TOP_LEFT, pull_up=True, bounce_time=0.02)
-BL_ls_halt = Button(LS_BOTTOM_LEFT, pull_up=True, bounce_time=0.02)
-R_ls_cali = Button(LS_CALIBRATE_RIGHT, pull_up=True, bounce_time=0.02)
-L_ls_cali = Button(LS_CALIBRATE_LEFT, pull_up=True, bounce_time=0.02)
-HR_ls_halt = Button(LS_HORIZONTAL_RIGHT_STOP, pull_up=True, bounce_time=0.02)
-HR_ls_cali = Button(LS_HORIZONTAL_RIGHT_INIT, pull_up=True, bounce_time=0.02)
-HL_ls_halt = Button(LS_HORIZONTAL_LEFT_STOP, pull_up=True, bounce_time=0.02)
-HL_ls_cali = Button(LS_HORIZONTAL_LEFT_INIT, pull_up=True, bounce_time=0.02)
+btn_estop = Button(BTN_ESTOP, pull_up=False, bounce_time=0.01)
+TR_ls_halt = Button(LS_TOP_RIGHT, pull_up=False, bounce_time=0.01)
+BR_ls_halt = Button(LS_BOTTOM_RIGHT, pull_up=False, bounce_time=0.01)
+TL_ls_halt = Button(LS_TOP_LEFT, pull_up=False, bounce_time=0.01)
+BL_ls_halt = Button(LS_BOTTOM_LEFT, pull_up=False, bounce_time=0.01)
+R_ls_cali = Button(LS_CALIBRATE_RIGHT, pull_up=False, bounce_time=0.01)
+L_ls_cali = Button(LS_CALIBRATE_LEFT, pull_up=False, bounce_time=0.01)
+HR_ls_halt = Button(LS_HORIZONTAL_RIGHT_STOP, pull_up=False, bounce_time=0.01)
+HR_ls_cali = Button(LS_HORIZONTAL_RIGHT_INIT, pull_up=False, bounce_time=0.01)
+HL_ls_halt = Button(LS_HORIZONTAL_LEFT_STOP, pull_up=False, bounce_time=0.01)
+HL_ls_cali = Button(LS_HORIZONTAL_LEFT_INIT, pull_up=False, bounce_time=0.01)
 
 btn_estop.when_deactivated = lambda: print("Estop Button Pressed")
 TR_ls_halt.when_deactivated = lambda: print("Top Right Limit Switch Pressed")

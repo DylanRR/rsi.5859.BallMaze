@@ -26,7 +26,7 @@ class haltingLimitSwitch:
 
 
 class limitSwitch:
-  def __init__(self, pin: int, pullUp: bool = True, bounceTime: float = 0.02):
+  def __init__(self, pin: int, pullUp: bool = True, bounceTime: float = 0.01):
     self.pin = pin
     self.objName = self.__getObjName()
     self.switch = Button(pin, pull_up=pullUp, bounce_time=bounceTime)

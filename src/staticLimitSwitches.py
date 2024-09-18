@@ -12,7 +12,7 @@ LS_BOTTOM_LEFT = 11             #Pin Label: SCLK    Wire Color:Gray
 LS_CALIBRATE_LEFT = 0           #Pin Label: ID_SD   Wire Color:Blue
 LS_HORIZONTAL_RIGHT_INIT = 17   #Pin Label: 17      Wire Color:Blue
 LS_HORIZONTAL_RIGHT_STOP = 27   #Pin Label: 27      Wire Color:Green
-LS_HORIZONTAL_LEFT_INIT = 13    #Pin Label: 13      Wire Color:Gray
+LS_HORIZONTAL_LEFT_INIT = 19    #Pin Label: 13      Wire Color:Gray
 LS_HORIZONTAL_LEFT_STOP = 6     #Pin Label: 6       Wire Color:Brown
 
 # Initialize Haulting Limit Switches

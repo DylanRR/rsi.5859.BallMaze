@@ -44,7 +44,8 @@ def calibrate_horizontal_track():
 	sMotors.motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
 	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 90, False)
-	sMotors.motor2.moveMotor(200, False, 5, False)
+	sMotors.motor2.moveMotor(200
+													, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
 	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
@@ -124,6 +125,7 @@ def calibrate_vertical_track():
 	print("Second Back Off Complete....")
 
 	mSync.calibrate()
+	'''
 	sMotors.motor1.overWriteCurrentPosition(0)
 	sMotors.motor3.overWriteCurrentPosition(0)
 	while mSync.isCalibrationComplete():
@@ -136,7 +138,7 @@ def calibrate_vertical_track():
 
 	sMotors.motor1.calibrateTrack(0, tempEnd)
 	sMotors.motor3.calibrateTrack(0, tempEnd)
-
+'''
 	print("Calibration Complete....")
 	encoderLocked(False)
 
@@ -223,10 +225,12 @@ def IR_RUN_STATE():
 			break
 
 		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
+			print("Starting Thread to move Motor 1 and 3")
 			thread_e1 = threading.Thread(target=run_in_second_thread)
 			thread_e1.start()
 
 		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
+			print("Starting Thread to move Motor 2")
 			thread_e2 = threading.Thread(target=run_in_thread)
 			thread_e2.start()
 
@@ -257,8 +261,8 @@ def devMoveAllToCenter():
 	steps = sMotors.motor2.getTrackSteps() // 2
 	for _ in range(steps):
 		sMotors.motor2.moveMotor(1, True, 85)
-		sMotors.motor1.moveMotor(1, True, 85)
-		sMotors.motor3.moveMotor(1, True, 85)
+		sMotors.motor1.moveMotor(1, False, 85)
+		sMotors.motor3.moveMotor(1, False, 85)
 
 def devScript():
 	calibrate_horizontal_track()
@@ -273,9 +277,10 @@ def main():
 	try:
 		while True:
 			checkException()
-			if testCal:
-				raise mHaltException("Test Calibration Complete")
+			#if testCal:
+			#	raise mHaltException("Test Calibration Complete")
 			devScript()
+			pass
 			testCal = True
 	
 	except KeyboardInterrupt:
