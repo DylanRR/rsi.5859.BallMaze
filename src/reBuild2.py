@@ -44,8 +44,7 @@ def calibrate_horizontal_track():
 	sMotors.motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
 	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 90, False)
-	sMotors.motor2.moveMotor(200
-													, False, 5, False)
+	sMotors.motor2.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
 	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
@@ -260,9 +259,9 @@ def IR_RUN_STATE():
 def devMoveAllToCenter():
 	steps = sMotors.motor2.getTrackSteps() // 2
 	for _ in range(steps):
-		sMotors.motor2.moveMotor(1, True, 85)
-		sMotors.motor1.moveMotor(1, False, 85)
-		sMotors.motor3.moveMotor(1, False, 85)
+		sMotors.motor2.moveMotor(1, True, 92)
+		sMotors.motor1.moveMotor(1, False, 92)
+		sMotors.motor3.moveMotor(1, False, 92)
 
 def devScript():
 	calibrate_horizontal_track()

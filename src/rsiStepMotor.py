@@ -179,7 +179,7 @@ class rsiStepMotor:
     self.setDirection(clockwise)
     self.setPower(power)
     self.__motorMoving = True
-    while not condition():
+    while condition():
       self.__mStep.on()
       sleep(self.__stepDelay)
       self.__mStep.off()
