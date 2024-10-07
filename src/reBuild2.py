@@ -43,7 +43,7 @@ def calibrate_horizontal_track():
 
 	sMotors.motor2.enableMotor()
 	leftSwitch.setLockedOut(True)
-	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 90, False)
+	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 92, False)
 	sMotors.motor2.moveMotor(200, False, 5, False)
 	rightSwitch.setLockedOut(False)
 
@@ -53,7 +53,7 @@ def calibrate_horizontal_track():
 	sMotors.motor2.overWriteCurrentPosition(tempHome)
 
 	leftSwitch.setLockedOut(False)
-	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 90, True)
+	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 92, True)
 	sMotors.motor2.moveMotor(200, True, 5, True)
 	leftSwitch.setLockedOut(False)
 
@@ -203,18 +203,19 @@ def devIR_RUN_STATE():
 		pass
 
 def run_in_thread():
-	sMotors.motor2.moveUntilCondition(lambda: sEncoders.encoder2.isEncoderRunning(), sEncoders.encoder2.direction, sEncoders.encoder2.getSpeed())
-
+	multiplier = 1
+	while sEncoders.encoder2.isEncoderRunning():
+		sMotors.motor2.moveMotor(1, sEncoders.encoder2.direction, abs(sEncoders.encoder2.getSpeed() + multiplier))
 def run_in_second_thread():
+	multiplier = 1.5
 	while sEncoders.encoder1.isEncoderRunning():
-		sMotors.motor1.moveMotor(1, sEncoders.encoder1.direction, sEncoders.encoder1.getSpeed())
-		sMotors.motor3.moveMotor(1, sEncoders.encoder1.direction, sEncoders.encoder1.getSpeed())
+		sMotors.motor1.moveMotor(1, sEncoders.encoder1.direction, abs(sEncoders.encoder1.getSpeed() + multiplier))
+		sMotors.motor3.moveMotor(1, sEncoders.encoder1.direction, abs(sEncoders.encoder1.getSpeed() + multiplier))
 
 # Main function to manage threads
 def IR_RUN_STATE():
 	thread_e1 = None
 	thread_e2 = None
-	lock = threading.Lock()
 
 	while True:
 		e1_state = sEncoders.encoder1.isEncoderRunning()
@@ -233,21 +234,7 @@ def IR_RUN_STATE():
 			thread_e2 = threading.Thread(target=run_in_thread)
 			thread_e2.start()
 
-		if thread_e1 and thread_e1.is_alive():
-			with lock:
-				tempDir = sEncoders.encoder1.direction
-				tempSpeed = sEncoders.encoder1.getSpeed()
-				sMotors.motor1.setDirection(tempDir)
-				sMotors.motor1.setPower(tempSpeed)
-				sMotors.motor3.setDirection(tempDir)
-				sMotors.motor3.setPower(tempSpeed)
-
-		if thread_e2 and thread_e2.is_alive():
-			with lock:
-				sMotors.motor2.setDirection(sEncoders.encoder2.direction)
-				sMotors.motor2.setPower(sEncoders.encoder2.getSpeed())
-
-		time.sleep(0.01)  # Prevents the CPU from being overloaded
+		time.sleep(0.1)  # Prevents the CPU from being overloaded
 
 	# Ensure threads are properly joined
 	if thread_e1:
