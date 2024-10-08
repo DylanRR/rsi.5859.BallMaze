@@ -157,9 +157,12 @@ def reSyncMotors():
 	m1DirToReSync = mSync.getReSyncDirection()
 	sMotors.motor1.moveUntilCondition(lambda: not mSync.isDeSynced(), m1DirToReSync, 1)
 	tempPos = sMotors.motor1.getCurrentPosition()
+	print("Motor edge re-syncing hit tempPos: ", tempPos)
 	sMotors.motor1.moveUntilCondition(lambda: mSync.isDeSynced(), m1DirToReSync, 1)
 	tempPos2 = sMotors.motor1.getCurrentPosition()
+	print("Motor far edge re-syncing hit tempPos2: ", tempPos2)
 	stepsToMiddle = abs(tempPos - tempPos2) // 2
+	print("Re-Sync stepsToMiddle: ", stepsToMiddle)
 	sMotors.motor1.moveMotor(stepsToMiddle, not m1DirToReSync, 1)
 	sMotors.motor1.overWriteCurrentPosition(sMotors.motor2.getCurrentPosition())
 	if mSync.isDeSynced():
@@ -234,9 +237,9 @@ def devMoveAllToCenter():
 		sMotors.motor3.moveMotor(1, False, 92)
 
 def devScript():
-	#calibrate_horizontal_track()
-	#calibrate_vertical_track()
-	#devMoveAllToCenter()
+	calibrate_horizontal_track()
+	calibrate_vertical_track()
+	devMoveAllToCenter()
 	input("Press Enter to continue...")  # Pause and wait for user input
 	while True:
 		IR_RUN_STATE()
