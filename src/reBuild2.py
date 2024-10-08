@@ -24,7 +24,7 @@ class mHaltException(Exception):
 	def __init__(self, message):
 		super().__init__(message)
 
-def encoderLocked(locked):
+def encodersLocked(locked):
 	sEncoders.encoder1.ISR_LOCK(locked)
 	sEncoders.encoder2.ISR_LOCK(locked)
 
@@ -34,7 +34,7 @@ def moveUntilCondition(motorObj: sMotors.rsiStepMotor, condition, steps, directi
 
 def calibrate_horizontal_track():
 	print("Entered Calibration Mode....")
-	encoderLocked(True)
+	encodersLocked(True)
 	print("Encoders Locked")
 	tempHome = 0
 	tempEnd = None
@@ -64,12 +64,12 @@ def calibrate_horizontal_track():
 
 	sMotors.motor2.calibrateTrack(tempHome, tempEnd)
 	print("Calibration Complete....")
-	encoderLocked(False)
+	encodersLocked(False)
 
 
 def calibrate_vertical_track():
 	print("Entered Calibration Mode....")
-	encoderLocked(True)
+	encodersLocked(True)
 	print("Encoders Locked")
 	tempHome = 0
 	tempEnd = None
@@ -139,7 +139,7 @@ def calibrate_vertical_track():
 	sMotors.motor3.calibrateTrack(0, tempEnd)
 '''
 	print("Calibration Complete....")
-	encoderLocked(False)
+	encodersLocked(False)
 
 
 def checkException():
@@ -151,56 +151,21 @@ def garbageCollection():
 	sEncoders.cleanup()
 	sLimitSwitches.cleanup()
 
-def checkSync(current_direction):
-	behind_motor, moveInstruction = mSync.getSyncInstructions(current_direction)
-	#Guarding statement in case things have changed since calling isDeSynced
-	if behind_motor == 0:
-		return
 
-	if behind_motor == 1:			#Motor 1 needs to catchup 
-		steps = round(sMotors.motor1.getTrackSteps() * (moveInstruction / 100))
-		if current_direction:
-			sMotors.motor1.moveMotor(steps, True, 40)
-		else:
-			sMotors.motor1.moveMotor(steps, False, 40)
-	else:											#Motor 3 needs to catchup
-		steps = round(sMotors.motor3.getTrackSteps() * (moveInstruction / 100))
-		if current_direction:
-			sMotors.motor3.moveMotor(steps, True, 40)
-		else:
-			sMotors.motor3.moveMotor(steps, False, 40)
-
-	#Recursively call checkSync until we are synced
+def reSyncMotors():
+	print("Re-Syncing Motors....")
+	m1DirToReSync = mSync.getReSyncDirection()
+	sMotors.motor1.moveUntilCondition(lambda: not mSync.isDeSynced(), m1DirToReSync, 1)
+	tempPos = sMotors.motor1.getCurrentPosition()
+	sMotors.motor1.moveUntilCondition(lambda: mSync.isDeSynced(), m1DirToReSync, 1)
+	tempPos2 = sMotors.motor1.getCurrentPosition()
+	stepsToMiddle = abs(tempPos - tempPos2) // 2
+	sMotors.motor1.moveMotor(stepsToMiddle, not m1DirToReSync, 1)
+	sMotors.motor1.overWriteCurrentPosition(sMotors.motor2.getCurrentPosition())
 	if mSync.isDeSynced():
-		checkSync()
-
-def devTestMotorSync(steps, direction, speed):
-	for i in range(steps):
-		sMotors.motor1.moveMotor(1, direction, speed)
-		sMotors.motor3.moveMotor(1, direction, speed)
-		if i % 100 == 0:
-			if mSync.isDeSynced():
-				checkSync(direction)
-
-
-
-def devIR_RUN_STATE():
-	e1_state = sEncoders.encoder1.isEncoderRunning()
-	e2_state = sEncoders.encoder2.isEncoderRunning()
-	#Encoder 1 = Vertical movement       Encoder 2 = Horizontal movement
-	if e1_state & e2_state:
-		while sEncoders.encoder1.isEncoderRunning() & sEncoders.encoder2.isEncoderRunning():
-			sMotors.motor2.moveMotor(1, sEncoders.encoder2.direction, sEncoders.encoder2.getSpeed())
-			e1_dir = sEncoders.encoder1.direction
-			e1_speed = sEncoders.encoder1.getSpeed()
-			sMotors.motor1.moveMotor(1, e1_dir, e1_speed)
-			sMotors.motor3.moveMotor(1, e1_dir, e1_speed)
-			if mSync.isDeSynced():
-				checkSync()
-	elif e1_state:
-		pass
-	elif e2_state:
-		pass
+		raise mHaltException("Re-Sync Failed")
+	else:
+		print("Re-Sync Completed successfully ....")
 
 def run_in_thread():
 	multiplier = 1
@@ -225,15 +190,33 @@ def IR_RUN_STATE():
 			break
 
 		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
-			print("Starting Thread to move Motor 1 and 3")
 			thread_e1 = threading.Thread(target=run_in_second_thread)
 			thread_e1.start()
 
 		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
-			print("Starting Thread to move Motor 2")
 			thread_e2 = threading.Thread(target=run_in_thread)
 			thread_e2.start()
 
+		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
+			tempDir = sEncoders.encoder1.direction
+			tempSpeed = sEncoders.encoder1.getSpeed()
+			sMotors.motor1.setDirection(tempDir)
+			sMotors.motor1.setPower(tempSpeed)
+			sMotors.motor3.setDirection(tempDir)
+			sMotors.motor3.setPower(tempSpeed)
+
+		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
+			sMotors.motor2.setDirection(sEncoders.encoder2.direction)
+			sMotors.motor2.setPower(sEncoders.encoder2.getSpeed())
+
+		if mSync.isDeSynced():
+			encodersLocked(True)
+			if thread_e1:
+				thread_e1.join()
+			if thread_e2:
+				thread_e2.join()
+			reSyncMotors()
+		
 		time.sleep(0.1)  # Prevents the CPU from being overloaded
 
 	# Ensure threads are properly joined

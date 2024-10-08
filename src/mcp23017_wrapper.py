@@ -41,3 +41,4 @@ class MCP_CHANNEL:
     sleep(duration)
     self.turnOff()
     sleep(duration)
+

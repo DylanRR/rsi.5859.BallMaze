@@ -106,6 +106,16 @@ class MotorSync:
       #self.__debugPrint(1, m1_value, m2_value, adjusted_m2_value)
       return 1, percentage
     
+  def getReSyncDirection(self):
+    m1_value = self.__m1Tracking.getValue()
+    m2_value = self.__m2Tracking.getValue()
+    adjusted_m2_value = m2_value + self.__offset
+    posDelta = m1_value - adjusted_m2_value
+    if posDelta > 0:
+      return False
+    else:
+      return True
+    
   def isDeSynced(self):
     m1_value = self.__m1Tracking.getValue()
     m2_value = self.__m2Tracking.getValue()
@@ -113,6 +123,7 @@ class MotorSync:
     posDelta = m1_value - adjusted_m2_value
     if abs(posDelta) > self.__actOnDelta:
       return True
+    return False
     return False
 
     
