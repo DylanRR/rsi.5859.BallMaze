@@ -234,7 +234,7 @@ def devMoveAllToCenter():
 		sMotors.motor3.moveMotor(1, False, 92)
 
 def devScript():
-	calibrate_horizontal_track()
+	#calibrate_horizontal_track()
 	#calibrate_vertical_track()
 	#devMoveAllToCenter()
 	input("Press Enter to continue...")  # Pause and wait for user input
