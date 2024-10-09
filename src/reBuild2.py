@@ -155,15 +155,8 @@ def garbageCollection():
 def reSyncMotors():
 	print("Re-Syncing Motors....")
 	m1DirToReSync = mSync.getReSyncDirection()
-	sMotors.motor1.moveUntilCondition(lambda: not mSync.isDeSynced(), m1DirToReSync, 1)
-	tempPos = sMotors.motor1.getCurrentPosition()
-	print("Motor edge re-syncing hit tempPos: ", tempPos)
-	sMotors.motor1.moveUntilCondition(lambda: mSync.isDeSynced(), m1DirToReSync, 1)
-	tempPos2 = sMotors.motor1.getCurrentPosition()
-	print("Motor far edge re-syncing hit tempPos2: ", tempPos2)
-	stepsToMiddle = abs(tempPos - tempPos2) // 2
-	print("Re-Sync stepsToMiddle: ", stepsToMiddle)
-	sMotors.motor1.moveMotor(stepsToMiddle, not m1DirToReSync, 1)
+	print("Moving Motor Up: ", m1DirToReSync)
+	sMotors.motor1.moveUntilCondition(lambda: not mSync.isFineSynced(), m1DirToReSync, 85)
 	sMotors.motor1.overWriteCurrentPosition(sMotors.motor2.getCurrentPosition())
 	if mSync.isDeSynced():
 		raise mHaltException("Re-Sync Failed")
@@ -213,12 +206,15 @@ def IR_RUN_STATE():
 			sMotors.motor2.setPower(sEncoders.encoder2.getSpeed())
 
 		if mSync.isDeSynced():
+			print("De-Sync Detected....")
 			encodersLocked(True)
 			if thread_e1:
 				thread_e1.join()
 			if thread_e2:
 				thread_e2.join()
 			reSyncMotors()
+			encodersLocked(False)
+			print("Exiting Re-Sync....")
 		
 		time.sleep(0.1)  # Prevents the CPU from being overloaded
 

@@ -52,7 +52,8 @@ class MotorSync:
     self.__m2Max = 0
     self.__offset = 0
     self.__sweepLength = 5000
-    self.__actOnDelta = 200  # Minimum change in ADC value to act on
+    self.__actOnDelta = 300  # Minimum change in ADC value to act on
+    self.__fineSyncDelta = 25  # Minimum change in ADC value to be considered finely synced
   
   def isCalibrationComplete(self):
     if self.__m2Tracking.getValue() > (self.__m2Max - self.__sweepLength):
@@ -124,6 +125,14 @@ class MotorSync:
     if abs(posDelta) > self.__actOnDelta:
       return True
     return False
+  
+  def isFineSynced(self):
+    m1_value = self.__m1Tracking.getValue()
+    m2_value = self.__m2Tracking.getValue()
+    adjusted_m2_value = m2_value + self.__offset
+    posDelta = m1_value - adjusted_m2_value
+    if abs(posDelta) < self.__fineSyncDelta:
+      return True
     return False
 
     
