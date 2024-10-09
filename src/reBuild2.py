@@ -142,6 +142,10 @@ def calibrate_vertical_track():
 	encodersLocked(False)
 
 
+
+
+
+
 def checkException():
 	if sMotors.motors_halted:
 		raise mHaltException(sMotors.halt_reason)
@@ -165,13 +169,49 @@ def reSyncMotors():
 
 def run_in_thread():
 	multiplier = 1
-	while sEncoders.encoder2.isEncoderRunning():
-		sMotors.motor2.moveMotor(1, sEncoders.encoder2.direction, abs(sEncoders.encoder2.getSpeed() + multiplier))
+	motor2 = sMotors.motor2
+	encoder2 = sEncoders.encoder2
+
+	cachedHomePos = motor2.getHomePosition()
+	cachedEndPos = motor2.getEndPosition()
+	tempLocalCurrentPos = motor2.getCurrentPosition()
+
+	while encoder2.isEncoderRunning():
+		runDir = encoder2.direction
+		if runDir:
+			tempLocalCurrentPos += 1
+			if tempLocalCurrentPos <= cachedEndPos:
+				motor2.moveMotor(1, runDir, abs(sEncoders.encoder2.getSpeed() * multiplier))  # NOTE: Previously we were doing + multiplier, but it should be * multiplier
+		else:
+			tempLocalCurrentPos -= 1
+			if tempLocalCurrentPos >= cachedHomePos:
+				motor2.moveMotor(1, runDir, abs(sEncoders.encoder2.getSpeed() * multiplier))	# NOTE: Previously we were doing + multiplier, but it should be * multiplier
+
+		
+
+
 def run_in_second_thread():
 	multiplier = 1.5
-	while sEncoders.encoder1.isEncoderRunning():
-		sMotors.motor1.moveMotor(1, sEncoders.encoder1.direction, abs(sEncoders.encoder1.getSpeed() + multiplier))
-		sMotors.motor3.moveMotor(1, sEncoders.encoder1.direction, abs(sEncoders.encoder1.getSpeed() + multiplier))
+	motor1 = sMotors.motor1
+	motor3 = sMotors.motor3
+	encoder1 = sEncoders.encoder1
+
+	cachedHomePos = motor3.getHomePosition()
+	cachedEndPos = motor3.getEndPosition()
+	tempLocalCurrentPos = motor3.getCurrentPosition()
+
+	while encoder1.isEncoderRunning():
+		runDir = encoder1.direction
+		if not runDir:
+			tempLocalCurrentPos += 1
+			if tempLocalCurrentPos <= cachedEndPos:
+				motor1.moveMotor(1, runDir, abs(sEncoders.encoder1.getSpeed() + multiplier))	# NOTE: Previously we were doing + multiplier, but it should be * multiplier
+				motor3.moveMotor(1, runDir, abs(sEncoders.encoder1.getSpeed() + multiplier))	# NOTE: Previously we were doing + multiplier, but it should be * multiplier
+		else:
+			tempLocalCurrentPos -= 1
+			if tempLocalCurrentPos >= cachedHomePos:
+				motor1.moveMotor(1, runDir, abs(sEncoders.encoder1.getSpeed() + multiplier))	# NOTE: Previously we were doing + multiplier, but it should be * multiplier
+				motor3.moveMotor(1, runDir, abs(sEncoders.encoder1.getSpeed() + multiplier))	# NOTE: Previously we were doing + multiplier, but it should be * multiplier
 
 # Main function to manage threads
 def IR_RUN_STATE():
@@ -193,6 +233,8 @@ def IR_RUN_STATE():
 			thread_e2 = threading.Thread(target=run_in_thread)
 			thread_e2.start()
 
+
+		#########NOTE: I do not think updating the motor speed is necessary, as the speed is already being updated in the run_in_thread functions	
 		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
 			tempDir = sEncoders.encoder1.direction
 			tempSpeed = sEncoders.encoder1.getSpeed()
@@ -202,9 +244,18 @@ def IR_RUN_STATE():
 			sMotors.motor3.setPower(tempSpeed)
 
 		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
+			tempDir = sEncoders.encoder2.direction
+			tempSpeed = None
+			if (sMotors.motor2.getCurrentPosition() >= sMotors.motor2.getEndPosition()) and (tempDir == False):
+				pass
+			elif (sMotors.motor2.getCurrentPosition() <= sMotors.motor2.getHomePosition()) and (tempDir == True):
+				pass
+
 			sMotors.motor2.setDirection(sEncoders.encoder2.direction)
 			sMotors.motor2.setPower(sEncoders.encoder2.getSpeed())
+		#########NOTE: SEE ABOVE COMMENT ^^^^^^^^^^^^^^^^^^^^
 
+		
 		if mSync.isDeSynced():
 			print("De-Sync Detected....")
 			encodersLocked(True)
@@ -215,6 +266,7 @@ def IR_RUN_STATE():
 			reSyncMotors()
 			encodersLocked(False)
 			print("Exiting Re-Sync....")
+
 		
 		time.sleep(0.1)  # Prevents the CPU from being overloaded
 
