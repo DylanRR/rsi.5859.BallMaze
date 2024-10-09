@@ -124,7 +124,7 @@ def calibrate_vertical_track():
 	print("Second Back Off Complete....")
 
 	mSync.calibrate()
-	'''
+	
 	sMotors.motor1.overWriteCurrentPosition(0)
 	sMotors.motor3.overWriteCurrentPosition(0)
 	while mSync.isCalibrationComplete():
@@ -137,7 +137,7 @@ def calibrate_vertical_track():
 
 	sMotors.motor1.calibrateTrack(0, tempEnd)
 	sMotors.motor3.calibrateTrack(0, tempEnd)
-'''
+
 	print("Calibration Complete....")
 	encodersLocked(False)
 
@@ -287,7 +287,7 @@ def devMoveAllToCenter():
 def devScript():
 	calibrate_horizontal_track()
 	calibrate_vertical_track()
-	devMoveAllToCenter()
+	#devMoveAllToCenter()
 	input("Press Enter to continue...")  # Pause and wait for user input
 	while True:
 		IR_RUN_STATE()
