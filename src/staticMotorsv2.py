@@ -1,4 +1,4 @@
-from rsiStepMotor import rsiStepMotor
+from rsiStepMotorv2 import rsiDuelStepMotor
 
 MOTOR_1_ENABLE = 14             #Pin Label: TXD     Wire Color:White
 MOTOR_1_DIRECTION = 15          #Pin Label: RXD     Wire Color:Green
@@ -12,22 +12,22 @@ MOTOR_3_STEP = 1                #Pin Label: EEC     Wire Color:Brown
 
 
 # Initialize Motor
-motor1 = rsiStepMotor(MOTOR_1_STEP, MOTOR_1_DIRECTION, MOTOR_1_ENABLE)
-motor2 = rsiStepMotor(MOTOR_2_STEP, MOTOR_2_DIRECTION, MOTOR_2_ENABLE)
-motor3 = rsiStepMotor(MOTOR_3_STEP, MOTOR_3_DIRECTION, MOTOR_3_ENABLE)
-motors = [motor1, motor2, motor3]
+verticalMotors = rsiDuelStepMotor()
+verticalMotors.initMotor1(MOTOR_1_STEP, MOTOR_1_DIRECTION, MOTOR_1_ENABLE)
+verticalMotors.initMotor2(MOTOR_3_STEP, MOTOR_3_DIRECTION, MOTOR_3_ENABLE)
 
+horizontalMotors = rsiDuelStepMotor()
+horizontalMotors.initMotor1(MOTOR_2_STEP, MOTOR_2_DIRECTION, MOTOR_2_ENABLE)
+
+motors = [verticalMotors, horizontalMotors]
 motors_halted = False
 halt_reason = ""
 
-
 #Disable all motors
 def disableAllMotors(haltReason="Null"):
-  global motors_halted, halt_reason
-  motor3.haltMotor("Motor 3")
-  motor1.haltMotor("Motor 1")
-  motor2.haltMotor("Motor 2")
-
+  global motors_halted
+  for motor in motors:
+    motor.disableMotors()
   motors_halted = True
   halt_reason = haltReason
 
@@ -35,3 +35,4 @@ def disableAllMotors(haltReason="Null"):
 def cleanup():
   for motor in motors:
     motor.close()
+

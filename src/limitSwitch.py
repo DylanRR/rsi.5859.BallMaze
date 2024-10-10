@@ -1,6 +1,6 @@
 from gpiozero import Button
 import inspect
-import staticMotors as sMotor
+import staticMotorsv2 as sMotor
 
 class mHaltException(Exception):
   def __init__(self, message):

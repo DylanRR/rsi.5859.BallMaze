@@ -1,4 +1,4 @@
-from rsiStepMotor import rsiStepMotor
+from deprecated.rsiStepMotor import rsiStepMotor
 from time import sleep
 from gpiozero import Button
 from adafruit_mcp230xx.mcp23017 import MCP23017

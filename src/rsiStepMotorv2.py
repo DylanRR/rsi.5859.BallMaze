@@ -18,9 +18,12 @@ class rsiDuelStepMotor:
     self.__constPulseMax = 0.01
     self.__constPulseDelta = (self.__constPulseMax - self.__constPulseMin) / 100
     
-    self.__threadLock = threading.Lock()
+    self.__speedLock = threading.Lock()
+    self.__positionLock = threading.Lock()
 
-    self.__
+    self.__direction = None
+    self.__position = 0
+    self.__endPosition = None
 
 
   def initMotor1(self, stepPin, dirPin, enablePin):
@@ -45,26 +48,43 @@ class rsiDuelStepMotor:
       if pin is not None:
         pin.close()
 
-  def setDirection(self, direction):
-    self.__m1Dir.value = direction
-    self.__m2Dir.value = direction
+  def __setDirection(self, direction):
+    if self.__m1Dir is not None:
+      self.__m1Dir.value = direction
+    if self.__m2Dir is not None:
+      self.__m2Dir.value = direction
 
   def enableMotors(self):
-    self.__m1Enable.off()
-    self.__m2Enable.off()
+    if self.__m1Enable is not None:
+      self.__m1Enable.off()
+    if self.__m2Enable is not None:
+      self.__m2Enable.off()
 
   def disableMotors(self):
-    self.__m1Enable.on()
-    self.__m2Enable.on()
+    if self.__m1Enable is not None:
+      self.__m1Enable.on()
+    if self.__m2Enable is not None:
+      self.__m2Enable.on()
+
+  def overwritePosition(self, position):
+    with self.__positionLock:
+      self.__position = position
+
+  def getPosition(self):
+    with self.__positionLock:
+      return self.__position
+
+  def setEndPosition(self, position):
+    self.__endPosition = position
 
   def setTargetSpeed(self, speed):
     # Acquire the lock to safely update __targetSpeed
-    with self.__threadLock:
+    with self.__speedLock:
       self.__targetSpeed = speed
 
   def __updatePulseRate(self):
     # Acquire the lock to safely read __targetSpeed
-    with self.__threadLock:
+    with self.__speedLock:
        targetSpeed = self.__targetSpeed
     
     pRate = self.__pulseRate
@@ -105,11 +125,11 @@ class rsiDuelStepMotor:
     self.__m2Step.off()
     sleep(self.__pulseRate)
 
-  def pulseFactory(self, condition, direction, motor1=True, motor2=True):
+  def pulseFactory(self, direction, condition=None, iterations=None, motor1=True, motor2=True, initialTargetSpeed=0):
     """Factory method to pulse motors based on the given condition."""
     self.enableMotors()
-    self.setDirection(direction)
-    self.setTargetSpeed(0)
+    self.__setDirection(direction)
+    self.setTargetSpeed(initialTargetSpeed)
     self.__updatePulseRate()
     if motor1 and motor2:
       pulse = self.__doubleMotorPulse
@@ -120,10 +140,19 @@ class rsiDuelStepMotor:
     else:
       self.disableMotors()
       return  # No motors to pulse
-
-    while condition():
-      pulse()
-      self.__updatePulseRate()
+    
+    if iterations is not None:
+      for _ in range(iterations):
+        pulse()
+        self.__updatePulseRate()
+        with self.__positionLock:
+          self.__position += 1 if direction else -1
+    elif condition is not None:
+      while condition():
+        pulse()
+        self.__updatePulseRate()
+        with self.__positionLock:
+          self.__position += 1 if direction else -1
 
     self.__targetSpeed = None
     self.__pulseRate = None

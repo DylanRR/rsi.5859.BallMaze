@@ -1,6 +1,6 @@
 from time import sleep
 from gpiozero import Button
-from rsiStepMotor import rsiStepMotor
+from deprecated.rsiStepMotor import rsiStepMotor
 
 #GPIO PI Pins
 BTN_ESTOP = 0                   #Pin Label: EED     Wire Color: Red

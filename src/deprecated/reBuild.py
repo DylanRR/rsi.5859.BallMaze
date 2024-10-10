@@ -1,6 +1,6 @@
 from gpiozero import Button, OutputDevice, Device
 from time import sleep
-from rsiStepMotor import rsiStepMotor
+from deprecated.rsiStepMotor import rsiStepMotor
 from mcpControl import mcpInputInterruptPin, mcpOutputPin
 from encoderv2 import Encoder
 from adafruit_mcp230xx.mcp23017 import MCP23017

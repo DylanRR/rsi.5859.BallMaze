@@ -1,7 +1,7 @@
 import staticVars as sVars
 import staticEncoders as sEncoders
 import staticLimitSwitches as sLimitSwitches
-import staticMotors as sMotors
+import staticMotorsv2 as sMotors
 import sys
 #from pot_calibration import MotorTracking as mTrack
 import time
@@ -28,116 +28,73 @@ def encodersLocked(locked):
 	sEncoders.encoder1.ISR_LOCK(locked)
 	sEncoders.encoder2.ISR_LOCK(locked)
 
-def moveUntilCondition(motorObj: sMotors.rsiStepMotor, condition, steps, direction, speed, trackPos=True, rampOverride=False):
-  while not condition():
-    motorObj.moveMotor(steps, direction, speed, trackPos, rampOverride)
-
 def calibrate_horizontal_track():
-	print("Entered Calibration Mode....")
+	print("Entered Horizontal Calibration Mode....")
 	encodersLocked(True)
 	print("Encoders Locked")
-	tempHome = 0
-	tempEnd = None
-	rightSwitch = sLimitSwitches.HL_ls_cali
-	leftSwitch = sLimitSwitches.HR_ls_cali
+	leftSwitch = sLimitSwitches.HL_ls_cali
+	rightSwitch = sLimitSwitches.HR_ls_cali
+	hMotor = sMotors.horizontalMotors
 
-	sMotors.motor2.enableMotor()
-	leftSwitch.setLockedOut(True)
-	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getFirstCalibration(), 1, True, 92, False)
-	sMotors.motor2.moveMotor(200, False, 5, False)
+	hMotor.pulseFactory(direction=False, condition=lambda: not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=90)
+	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=50)
+	leftSwitch.setLockedOut(False)
+	hMotor.pulseFactory(direction=False, condition=lambda: not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=5)
+	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=50)
+	leftSwitch.setLockedOut(False)
+	hMotor.overwritePosition(0)
+
+	hMotor.pulseFactory(direction=True, condition=lambda: not rightSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=90)
+	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=50)
+	rightSwitch.setLockedOut(False)
+	hMotor.pulseFactory(direction=True, condition=lambda: not rightSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=5)
+	hMotor.pulseFactory(direction=False, iterations=20, motor1=True, motor2=False, initialTargetSpeed=50)
 	rightSwitch.setLockedOut(False)
 
-	moveUntilCondition(sMotors.motor2, lambda: rightSwitch.getSecondCalibration(), 1, True, 5, False,)
-	sMotors.motor2.moveMotor(20, True, 1, False)
-	rightSwitch.setLockedOut(False)
-	sMotors.motor2.overWriteCurrentPosition(tempHome)
-
-	leftSwitch.setLockedOut(False)
-	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getFirstCalibration(), 1, False, 92, True)
-	sMotors.motor2.moveMotor(200, True, 5, True)
-	leftSwitch.setLockedOut(False)
-
-	moveUntilCondition(sMotors.motor2, lambda: leftSwitch.getSecondCalibration(), 1, False, 5, True)
-	sMotors.motor2.moveMotor(20, True, 1, True)
-	leftSwitch.setLockedOut(False)
-	tempEnd = sMotors.motor2.getCurrentPosition()
-
-	sMotors.motor2.calibrateTrack(tempHome, tempEnd)
+	hMotor.setEndPosition(hMotor.getPosition())
 	print("Calibration Complete....")
 	encodersLocked(False)
 
 
 def calibrate_vertical_track():
-	print("Entered Calibration Mode....")
+	print("Entered Vertical Calibration Mode....")
 	encodersLocked(True)
 	print("Encoders Locked")
-	tempHome = 0
-	tempEnd = None
 	leftSwitch = sLimitSwitches.L_ls_cali
 	rightSwitch = sLimitSwitches.R_ls_cali
-	tempL = False
-	tempR = False
+	vMotors = sMotors.verticalMotors
+	knownStepCount = 5000	#This is the known step count for the vertical track it needs to be manually calibrated
 
-#Move the motors until first LS is hit
-	while not tempL or not tempR:
-		if not leftSwitch.getFirstCalibration():
-			sMotors.motor1.moveMotor(1, True, 90, False)
-		else:
-			print ("Left Switch Hit")
-			tempL = True
-		if not rightSwitch.getFirstCalibration():
-			sMotors.motor3.moveMotor(1, True, 90, False)	
-		else:
-			print ("Right Switch Hit")
-			tempR = True
-	print("First Calibration hit Complete....")
+	def leftRightSwitchTrip():
+		return True if leftSwitch.getFirstCalibration() or rightSwitch.getFirstCalibration() else False
+	
+	vMotors.pulseFactory(direction=True, condition= not leftRightSwitchTrip(), motor1=True, motor2=True, initialTargetSpeed=90)
 
-#Back off the motors slowly
-	for _ in range(300):
-		sMotors.motor1.moveMotor(1, False, 60, False)
-		sMotors.motor3.moveMotor(1, False, 60, False)
+	if not leftSwitch.getFirstCalibration():
+		vMotors.pulseFactory(direction=True, condition=not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
+	if not rightSwitch.getFirstCalibration():
+		vMotors.pulseFactory(direction=True, condition=not rightSwitch.getFirstCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
+
+	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
 
 	leftSwitch.setLockedOut(False)
 	rightSwitch.setLockedOut(False)
 
-	print("Back Off Complete....")
-
-#Move the motors until the LS is hit for a second time
-	tempL = False
-	tempR = False
-	while not tempL or not tempR:
-		if not leftSwitch.getSecondCalibration():
-			sMotors.motor1.moveMotor(1, True, 60, False)
-		else:
-			tempL = True
-		if not rightSwitch.getSecondCalibration():
-			sMotors.motor3.moveMotor(1, True, 60, False)
-		else:
-			tempR = True
-	print("Second Calibration hit Complete....")
-
-#Back off the motors slowly to home position
-	for _ in range(300):
-		sMotors.motor1.moveMotor(1, False, 60)
-		sMotors.motor3.moveMotor(1, False, 60)
+	def leftRightSwitchTrip2():
+		return True if leftSwitch.getSecondCalibration() or rightSwitch.getSecondCalibration() else False
 	
-	print("Second Back Off Complete....")
+	vMotors.pulseFactory(direction=True, condition= not leftRightSwitchTrip2(), motor1=True, motor2=True, initialTargetSpeed=90)
 
-	mSync.calibrate()
-	'''
-	sMotors.motor1.overWriteCurrentPosition(0)
-	sMotors.motor3.overWriteCurrentPosition(0)
-	while mSync.isCalibrationComplete():
-		sMotors.motor1.moveMotor(1, False, 100, True)
-		sMotors.motor3.moveMotor(1, False, 100, True)
+	if not leftSwitch.getSecondCalibration():
+		vMotors.pulseFactory(direction=True, condition=not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
+	if not rightSwitch.getSecondCalibration():
+		vMotors.pulseFactory(direction=True, condition=not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
-	tempEnd1 = sMotors.motor1.getCurrentPosition()
-	tempEnd2 = sMotors.motor3.getCurrentPosition()
-	tempEnd = (tempEnd1 + tempEnd2) // 2
+	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
 
-	sMotors.motor1.calibrateTrack(0, tempEnd)
-	sMotors.motor3.calibrateTrack(0, tempEnd)
-'''
+	vMotors.overwritePosition(knownStepCount) #If we want the top to be the end we would just set our current position to the known static end position
+	vMotors.setEndPosition(knownStepCount)
+
 	print("Calibration Complete....")
 	encodersLocked(False)
 
