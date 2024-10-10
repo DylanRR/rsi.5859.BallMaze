@@ -14,22 +14,25 @@ vMotors = duelMotor()
 vMotors.initMotor1(m1Step, m1Dir, m1Enable)
 vMotors.initMotor2(m2Step, m2Dir, m2Enable)
 
-KillFlag = False
+runFlag = True
+
+def getKillFlag():
+  global runFlag
+  return runFlag
 
 def run():
-  global KillFlag
-  vMotors.pulseFactory(not KillFlag, True)
+  vMotors.pulseFactory(lambda: getKillFlag(), False)
 
 
 def main():
-    global KillFlag
+    global runFlag
     input("Press Enter to start...")
     thread = threading.Thread(target=run)
     thread.start()
-    vMotors.setTargetSpeed(50)
+    vMotors.setTargetSpeed(100)
 
     input("Press Enter to stop...")
-    KillFlag = True
+    runFlag = False
     thread.join()  # Wait for the thread to finish
 
     # Ensure motors are properly disabled or cleaned up

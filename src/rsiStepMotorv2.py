@@ -14,7 +14,7 @@ class rsiDuelStepMotor:
 
     self.__targetSpeed = None
     self.__pulseRate = None
-    self.__constPulseMin = 0.001
+    self.__constPulseMin = 0.0008
     self.__constPulseMax = 0.01
     self.__constPulseDelta = (self.__constPulseMax - self.__constPulseMin) / 100
     
@@ -106,6 +106,7 @@ class rsiDuelStepMotor:
   def pulseFactory(self, condition, direction, motor1=True, motor2=True):
     self.enableMotors()
     self.setDirection(direction)
+    self.setTargetSpeed(0)
     self.__updatePulseRate()
     """Factory method to pulse motors based on the given condition."""
     if motor1 and motor2:
