@@ -1,13 +1,14 @@
 from rsiStepMotorv2 import rsiDuelStepMotor as duelMotor
 import threading
 
-m1Step = 17
-m1Dir = 27
-m1Enable = 22
+m1Step = 18
+m1Dir = 15
+m1Enable = 14
 
-m2Step = 23
-m2Dir = 24
-m2Enable = 25
+m2Step = 1
+m2Dir = 7
+m2Enable = 8
+
 
 vMotors = duelMotor()
 vMotors.initMotor1(m1Step, m1Dir, m1Enable)
