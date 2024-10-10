@@ -20,6 +20,8 @@ class rsiDuelStepMotor:
     
     self.__threadLock = threading.Lock()
 
+    self.__
+
 
   def initMotor1(self, stepPin, dirPin, enablePin):
     self.__m1Step = DigitalOutputDevice(stepPin, active_high=True, initial_value=False)
@@ -104,35 +106,27 @@ class rsiDuelStepMotor:
     sleep(self.__pulseRate)
 
   def pulseFactory(self, condition, direction, motor1=True, motor2=True):
+    """Factory method to pulse motors based on the given condition."""
     self.enableMotors()
     self.setDirection(direction)
     self.setTargetSpeed(0)
     self.__updatePulseRate()
-    """Factory method to pulse motors based on the given condition."""
     if motor1 and motor2:
-        pulse = self.__doubleMotorPulse
+      pulse = self.__doubleMotorPulse
     elif motor1:
-        pulse = self.__motor1Pulse
+      pulse = self.__motor1Pulse
     elif motor2:
-        pulse = self.__motor2Pulse
+      pulse = self.__motor2Pulse
     else:
-        return  # No motors to pulse
+      self.disableMotors()
+      return  # No motors to pulse
 
     while condition():
-        pulse()
-        self.__updatePulseRate()
+      pulse()
+      self.__updatePulseRate()
 
     self.__targetSpeed = None
     self.__pulseRate = None
     self.disableMotors()
-
-
-  # This function should be in the main body of the code
-  def moveMotorUntil(self, condition, direction, targetSpeed):
-    #Start the pulse factory in a new thread
-    while condition():
-      #update speed
-      pass
-
 
 
