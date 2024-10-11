@@ -76,6 +76,8 @@ class rsiDuelStepMotor:
 
   def setEndPosition(self, position):
     self.__endPosition = position
+  def getEndPosition(self):
+    return self.__endPosition
 
   def setTargetSpeed(self, speed):
     # Acquire the lock to safely update __targetSpeed

@@ -92,7 +92,7 @@ def calibrate_vertical_track():
 
 	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
 
-	vMotors.overwritePosition(knownStepCount) #If we want the top to be the end we would just set our current position to the known static end position
+	vMotors.overwritePosition(knownStepCount)
 	vMotors.setEndPosition(knownStepCount)
 
 	print("Calibration Complete....")
@@ -112,28 +112,48 @@ def garbageCollection():
 def reSyncMotors():
 	print("Re-Syncing Motors....")
 	m1DirToReSync = mSync.getReSyncDirection()
+	vMotors = sMotors.verticalMotors
 	print("Moving Motor Up: ", m1DirToReSync)
-	sMotors.motor1.moveUntilCondition(lambda: not mSync.isFineSynced(), m1DirToReSync, 85)
-	sMotors.motor1.overWriteCurrentPosition(sMotors.motor2.getCurrentPosition())
+	tempPos = vMotors.getPosition()
+	vMotors.pulseFactory(direction=m1DirToReSync, condition=lambda: not mSync.isFineSynced(), motor1=True, motor2=False, initialTargetSpeed=85)
+	tempPos = abs(tempPos - vMotors.getPosition()) // 2
+	vMotors.overwritePosition(tempPos)
 	if mSync.isDeSynced():
 		raise mHaltException("Re-Sync Failed")
 	else:
 		print("Re-Sync Completed successfully ....")
 
 def run_in_thread():
-	multiplier = 1
-	while sEncoders.encoder2.isEncoderRunning():
-		sMotors.motor2.moveMotor(1, sEncoders.encoder2.direction, abs(sEncoders.encoder2.getSpeed() + multiplier))
+	hMotor = sMotors.horizontalMotors
+	tempDir = sEncoders.encoder2.direction
+	initSpeed = sEncoders.encoder2.getSpeed()
+
+	def checkExit():
+		if not sEncoders.encoder2.isEncoderRunning() or sEncoders.encoder2.direction != tempDir:
+			return False
+		return True
+	
+	hMotor.pulseFactory(direction=tempDir, condition= lambda: checkExit(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)
+
 def run_in_second_thread():
-	multiplier = 1.5
-	while sEncoders.encoder1.isEncoderRunning():
-		sMotors.motor1.moveMotor(1, sEncoders.encoder1.direction, abs(sEncoders.encoder1.getSpeed() + multiplier))
-		sMotors.motor3.moveMotor(1, sEncoders.encoder1.direction, abs(sEncoders.encoder1.getSpeed() + multiplier))
+	vMotor = sMotors.verticalMotors
+	tempDir = sEncoders.encoder1.direction
+	initSpeed = sEncoders.encoder1.getSpeed()
+	def checkExit():
+		if not sEncoders.encoder1.isEncoderRunning() or sEncoders.encoder1.direction != tempDir:
+			return False
+		return True
+	vMotor.pulseFactory(direction=tempDir, condition= lambda: checkExit(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
+
 
 # Main function to manage threads
 def IR_RUN_STATE():
 	thread_e1 = None
 	thread_e2 = None
+	hMotor = sMotors.horizontalMotors
+	vMotor = sMotors.verticalMotors
+	vEncode = sEncoders.encoder1
+	hEncode = sEncoders.encoder2
 
 	while True:
 		e1_state = sEncoders.encoder1.isEncoderRunning()
@@ -150,17 +170,11 @@ def IR_RUN_STATE():
 			thread_e2 = threading.Thread(target=run_in_thread)
 			thread_e2.start()
 
-		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
-			tempDir = sEncoders.encoder1.direction
-			tempSpeed = sEncoders.encoder1.getSpeed()
-			sMotors.motor1.setDirection(tempDir)
-			sMotors.motor1.setPower(tempSpeed)
-			sMotors.motor3.setDirection(tempDir)
-			sMotors.motor3.setPower(tempSpeed)
+		if e1_state and thread_e1.is_alive():
+			vMotor.setTargetSpeed(vEncode.getSpeed())
 
-		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
-			sMotors.motor2.setDirection(sEncoders.encoder2.direction)
-			sMotors.motor2.setPower(sEncoders.encoder2.getSpeed())
+		if e2_state and thread_e2.is_alive():
+			hMotor.setTargetSpeed(hEncode.getSpeed())
 
 		if mSync.isDeSynced():
 			print("De-Sync Detected....")
@@ -182,17 +196,10 @@ def IR_RUN_STATE():
 		thread_e2.join()
 
 
-def devMoveAllToCenter():
-	steps = sMotors.motor2.getTrackSteps() // 2
-	for _ in range(steps):
-		sMotors.motor2.moveMotor(1, True, 92)
-		sMotors.motor1.moveMotor(1, False, 92)
-		sMotors.motor3.moveMotor(1, False, 92)
 
 def devScript():
 	calibrate_horizontal_track()
 	calibrate_vertical_track()
-	devMoveAllToCenter()
 	input("Press Enter to continue...")  # Pause and wait for user input
 	while True:
 		IR_RUN_STATE()
