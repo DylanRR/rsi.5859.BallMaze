@@ -36,19 +36,19 @@ def calibrate_horizontal_track():
 	rightSwitch = sLimitSwitches.HR_ls_cali
 	hMotor = sMotors.horizontalMotors
 
-	hMotor.pulseFactory(direction=False, condition=lambda: not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=90)
-	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=50)
+	hMotor.pulseFactory(direction=True, condition=lambda: not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=96)
+	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=80)
 	leftSwitch.setLockedOut(False)
-	hMotor.pulseFactory(direction=False, condition=lambda: not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=5)
-	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=50)
+	hMotor.pulseFactory(direction=True, condition=lambda: not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=80)
+	hMotor.pulseFactory(direction=False, iterations=20, motor1=True, motor2=False, initialTargetSpeed=80)
 	leftSwitch.setLockedOut(False)
 	hMotor.overwritePosition(0)
 
-	hMotor.pulseFactory(direction=True, condition=lambda: not rightSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=90)
-	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=50)
+	hMotor.pulseFactory(direction=False, condition=lambda: not rightSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=96)
+	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=80)
 	rightSwitch.setLockedOut(False)
-	hMotor.pulseFactory(direction=True, condition=lambda: not rightSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=5)
-	hMotor.pulseFactory(direction=False, iterations=20, motor1=True, motor2=False, initialTargetSpeed=50)
+	hMotor.pulseFactory(direction=False, condition=lambda: not rightSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=80)
+	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=80)
 	rightSwitch.setLockedOut(False)
 
 	hMotor.setEndPosition(hMotor.getPosition())
@@ -68,12 +68,12 @@ def calibrate_vertical_track():
 	def leftRightSwitchTrip():
 		return True if leftSwitch.getFirstCalibration() or rightSwitch.getFirstCalibration() else False
 	
-	vMotors.pulseFactory(direction=True, condition= not leftRightSwitchTrip(), motor1=True, motor2=True, initialTargetSpeed=90)
+	vMotors.pulseFactory(direction=True, condition= lambda:not leftRightSwitchTrip(), motor1=True, motor2=True, initialTargetSpeed=90)
 
 	if not leftSwitch.getFirstCalibration():
-		vMotors.pulseFactory(direction=True, condition=not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
 	if not rightSwitch.getFirstCalibration():
-		vMotors.pulseFactory(direction=True, condition=not rightSwitch.getFirstCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getFirstCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
 	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
 
@@ -83,12 +83,12 @@ def calibrate_vertical_track():
 	def leftRightSwitchTrip2():
 		return True if leftSwitch.getSecondCalibration() or rightSwitch.getSecondCalibration() else False
 	
-	vMotors.pulseFactory(direction=True, condition= not leftRightSwitchTrip2(), motor1=True, motor2=True, initialTargetSpeed=90)
+	vMotors.pulseFactory(direction=True, condition=lambda: not leftRightSwitchTrip2(), motor1=True, motor2=True, initialTargetSpeed=90)
 
 	if not leftSwitch.getSecondCalibration():
-		vMotors.pulseFactory(direction=True, condition=not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
 	if not rightSwitch.getSecondCalibration():
-		vMotors.pulseFactory(direction=True, condition=not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
 	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
 
@@ -187,7 +187,7 @@ def IR_RUN_STATE():
 			encodersLocked(False)
 			print("Exiting Re-Sync....")
 		
-		time.sleep(0.1)  # Prevents the CPU from being overloaded
+		time.sleep(1)  # Prevents the CPU from being overloaded
 
 	# Ensure threads are properly joined
 	if thread_e1:

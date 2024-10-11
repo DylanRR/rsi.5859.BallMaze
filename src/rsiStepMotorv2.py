@@ -14,7 +14,7 @@ class rsiDuelStepMotor:
 
     self.__targetSpeed = None
     self.__pulseRate = None
-    self.__constPulseMin = 0.0008
+    self.__constPulseMin = 0.0001
     self.__constPulseMax = 0.01
     self.__constPulseDelta = (self.__constPulseMax - self.__constPulseMin) / 100
     

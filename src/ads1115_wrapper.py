@@ -52,7 +52,7 @@ class MotorSync:
     self.__m2Max = 0
     self.__offset = 0
     self.__sweepLength = 5000
-    self.__actOnDelta = 300  # Minimum change in ADC value to act on
+    self.__actOnDelta = 2000  # Minimum change in ADC value to act on
     self.__fineSyncDelta = 25  # Minimum change in ADC value to be considered finely synced
   
   def isCalibrationComplete(self):
