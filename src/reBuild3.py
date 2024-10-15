@@ -12,6 +12,7 @@ import board
 import busio
 import traceback
 import threading
+import collections
 
 
 # Initialize the I2C bus
@@ -95,6 +96,7 @@ def calibrate_vertical_track():
 
 	vMotors.setEndPosition(knownStepCount)
 	vMotors.overwritePosition(knownStepCount)
+	mSync.calibrate()
 
 	print("Calibration Complete....")
 	encodersLocked(False)
@@ -131,7 +133,7 @@ def run_in_thread():
 	initSpeed = sEncoders.encoder2.getSpeed()
 	tempEndPos = hMotor.getEndPosition()
 
-	def checkExit():
+	def continuePulsing():
 		if not encoder.isEncoderRunning():
 			return False
 		if encoder.direction != tempDir:
@@ -143,7 +145,8 @@ def run_in_thread():
 			return False
 		return True
 	
-	hMotor.pulseFactory(direction=tempDir, condition= lambda: checkExit(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)
+	if continuePulsing():
+		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)
 
 def run_in_second_thread():
 	vMotor = sMotors.verticalMotors
@@ -162,7 +165,8 @@ def run_in_second_thread():
 		elif vMotor.getPosition() <= 0:
 				return False
 		return True
-	vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
+	if continuePulsing():
+		vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
 
 
 # Main function to manage threads
@@ -173,6 +177,11 @@ def IR_RUN_STATE():
 	vMotor = sMotors.verticalMotors
 	vEncode = sEncoders.encoder1
 	hEncode = sEncoders.encoder2
+	lastVSpeedUpdate = time.time()
+	lastHSPeedUpdate = time.time()
+	speedUpdateInterval = 1
+	hSpeedBuffer = collections.deque(maxlen=5)
+	vSpeedBuffer = collections.deque(maxlen=5)
 
 	while True:
 		e1_state = sEncoders.encoder1.isEncoderRunning()
@@ -190,10 +199,16 @@ def IR_RUN_STATE():
 			thread_e2.start()
 
 		if e1_state and thread_e1.is_alive():
-			vMotor.setTargetSpeed(vEncode.getSpeed())
+			vSpeedBuffer.append(vEncode.getSpeed())
+			if time.time() - lastVSpeedUpdate > speedUpdateInterval:
+				vMotor.setTargetSpeed(sum(vSpeedBuffer) // len(vSpeedBuffer))
+				lastVSpeedUpdate = time.time()
 
 		if e2_state and thread_e2.is_alive():
-			hMotor.setTargetSpeed(hEncode.getSpeed())
+			hSpeedBuffer.append(hEncode.getSpeed())
+			if time.time() - lastHSPeedUpdate > speedUpdateInterval:
+				hMotor.setTargetSpeed(sum(hSpeedBuffer) // len(hSpeedBuffer))
+				lastHSPeedUpdate = time.time()
 
 		if mSync.isDeSynced():
 			print("De-Sync Detected....")
