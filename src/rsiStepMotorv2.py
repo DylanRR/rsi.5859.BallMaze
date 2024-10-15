@@ -47,6 +47,12 @@ class rsiDuelStepMotor:
     for pin in self.__pins:
       if pin is not None:
         pin.close()
+  
+  def getPositionLock(self):
+    return self.__positionLock
+  
+  def getSpeedLock(self):
+    return self.__speedLock
 
   def __setDirection(self, direction):
     if self.__m1Dir is not None:

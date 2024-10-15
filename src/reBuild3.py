@@ -51,7 +51,8 @@ def calibrate_horizontal_track():
 	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=80)
 	rightSwitch.setLockedOut(False)
 
-	hMotor.setEndPosition(hMotor.getPosition())
+	hMotor.setEndPosition(abs(hMotor.getPosition()))
+	hMotor.overwritePosition(0)
 	print("Calibration Complete....")
 	encodersLocked(False)
 
@@ -92,8 +93,8 @@ def calibrate_vertical_track():
 
 	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
 
-	vMotors.overwritePosition(knownStepCount)
 	vMotors.setEndPosition(knownStepCount)
+	vMotors.overwritePosition(knownStepCount)
 
 	print("Calibration Complete....")
 	encodersLocked(False)
@@ -125,11 +126,20 @@ def reSyncMotors():
 
 def run_in_thread():
 	hMotor = sMotors.horizontalMotors
+	encoder = sEncoders.encoder2
 	tempDir = sEncoders.encoder2.direction
 	initSpeed = sEncoders.encoder2.getSpeed()
+	tempEndPos = hMotor.getEndPosition()
 
 	def checkExit():
-		if not sEncoders.encoder2.isEncoderRunning() or sEncoders.encoder2.direction != tempDir:
+		if not encoder.isEncoderRunning():
+			return False
+		if encoder.direction != tempDir:
+			return False
+		if tempDir:
+			if hMotor.getPosition() >= tempEndPos:
+				return False
+		elif hMotor.getPosition() <= 0:
 			return False
 		return True
 	
@@ -137,13 +147,22 @@ def run_in_thread():
 
 def run_in_second_thread():
 	vMotor = sMotors.verticalMotors
-	tempDir = sEncoders.encoder1.direction
-	initSpeed = sEncoders.encoder1.getSpeed()
-	def checkExit():
-		if not sEncoders.encoder1.isEncoderRunning() or sEncoders.encoder1.direction != tempDir:
+	encoder = sEncoders.encoder1
+	tempDir = encoder.direction
+	initSpeed = encoder.getSpeed()
+	tempEndPos = vMotor.getEndPosition()
+	def continuePulsing():
+		if not encoder.isEncoderRunning():
 			return False
+		if encoder.direction != tempDir:
+			return False
+		if tempDir:
+			if vMotor.getPosition() >= tempEndPos:
+				return False
+		elif vMotor.getPosition() <= 0:
+				return False
 		return True
-	vMotor.pulseFactory(direction=tempDir, condition= lambda: checkExit(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
+	vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
 
 
 # Main function to manage threads
