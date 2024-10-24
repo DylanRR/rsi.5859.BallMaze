@@ -1,19 +1,16 @@
 from limitSwitch import haltingLimitSwitch, limitSwitch
 
-BTN_ESTOP = 4                   #Pin Label: 4       Wire Color: Black
-LS_TOP_RIGHT = 4                #Pin Label: 4       Wire Color: Red
-LS_BOTTOM_RIGHT = 5             #Pin Label: 5       Wire Color:Red
-LS_CALIBRATE_RIGHT = 6          #Pin Label: 6       Wire Color:Red
-LS_TOP_RIGHT = 9                #Pin Label: MISO    Wire Color: White
-LS_BOTTOM_RIGHT = 22            #Pin Label: 22      Wire Color:Brown
-LS_CALIBRATE_RIGHT = 10         #Pin Label: MOSI    Wire Color:Purple
-LS_TOP_LEFT = 5                 #Pin Label: 5       Wire Color:Green/Yellow
-LS_BOTTOM_LEFT = 11             #Pin Label: SCLK    Wire Color:Gray
-LS_CALIBRATE_LEFT = 0           #Pin Label: ID_SD   Wire Color:Blue
-LS_HORIZONTAL_RIGHT_INIT = 17   #Pin Label: 17      Wire Color:Blue
+BTN_ESTOP = 9                    #Pin Label: SCL     Wire Color: Purple
+LS_TOP_RIGHT = 14                #Pin Label: MISO    Wire Color: White
+LS_BOTTOM_RIGHT = 15            #Pin Label: 22      Wire Color:Brown
+LS_CALIBRATE_RIGHT = 4         #Pin Label: MOSI    Wire Color:Purple
+LS_TOP_LEFT = 24                 #Pin Label: 5       Wire Color:Green/Yellow
+LS_BOTTOM_LEFT = 10             #Pin Label: SCLK    Wire Color:Gray
+LS_CALIBRATE_LEFT = 23           #Pin Label: ID_SD   Wire Color:Blue
+LS_HORIZONTAL_RIGHT_INIT = 22   #Pin Label: 17      Wire Color:Blue
 LS_HORIZONTAL_RIGHT_STOP = 27   #Pin Label: 27      Wire Color:Green
-LS_HORIZONTAL_LEFT_INIT = 19    #Pin Label: 13      Wire Color:Gray
-LS_HORIZONTAL_LEFT_STOP = 6     #Pin Label: 6       Wire Color:Brown
+LS_HORIZONTAL_LEFT_INIT = 17    #Pin Label: 13      Wire Color:Gray
+LS_HORIZONTAL_LEFT_STOP = 18   
 
 # Initialize Haulting Limit Switches
 btn_estop = haltingLimitSwitch("btn_estop", BTN_ESTOP)
