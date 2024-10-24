@@ -92,7 +92,8 @@ def calibrate_vertical_track():
 	if not rightSwitch.getSecondCalibration():
 		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
-	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
+	#chaning from  300 iterations to 3000 iterations to move down the gantry for brian
+	vMotors.pulseFactory(direction=False, iterations=3000, motor1=True, motor2=True, initialTargetSpeed=80)
 
 	vMotors.setEndPosition(knownStepCount)
 	vMotors.overwritePosition(knownStepCount)
@@ -232,7 +233,7 @@ def IR_RUN_STATE():
 
 
 def devScript():
-	calibrate_horizontal_track()
+	#calibrate_horizontal_track()
 	calibrate_vertical_track()
 	input("Press Enter to continue...")  # Pause and wait for user input
 	while True:
