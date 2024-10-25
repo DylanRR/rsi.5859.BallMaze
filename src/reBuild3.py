@@ -173,7 +173,6 @@ def run_in_second_thread():
 
 # Main function to manage threads
 def IR_RUN_STATE():
-	print("Entering Run State")
 	thread_e1 = None
 	thread_e2 = None
 	hMotor = sMotors.horizontalMotors
@@ -189,7 +188,6 @@ def IR_RUN_STATE():
 	while True:
 		e1_state = sEncoders.encoder1.isEncoderRunning()
 		e2_state = sEncoders.encoder2.isEncoderRunning()
-		print(f"Encoder 1 State: {e1_state} Encoder 2 State: {e2_state}")
 
 		if not e1_state and not e2_state:
 			break
@@ -232,7 +230,8 @@ def IR_RUN_STATE():
 				thread_e1.join()
 			if thread_e2:
 				thread_e2.join()
-			sendToHome()   #Need to implement this function
+			#sendToHome()   #Need to implement this function
+			print("Break Beam Triggered....")
 			encodersLocked(False)
 		
 		time.sleep(1)  # Prevents the CPU from being overloaded
