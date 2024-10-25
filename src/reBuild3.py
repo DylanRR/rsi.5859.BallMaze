@@ -2,6 +2,7 @@ import staticVars as sVars
 import staticEncoders as sEncoders
 import staticLimitSwitches as sLimitSwitches
 import staticMotorsv2 as sMotors
+import staticMCP as sMCP
 import sys
 #from pot_calibration import MotorTracking as mTrack
 import time
@@ -223,6 +224,16 @@ def IR_RUN_STATE():
 			reSyncMotors()
 			encodersLocked(False)
 			print("Exiting Re-Sync....")
+
+		if sMCP.breakBeam_SENS.is_pressed():
+			print("Break Beam Triggered....")
+			encodersLocked(True)
+			if thread_e1:
+				thread_e1.join()
+			if thread_e2:
+				thread_e2.join()
+			sendToHome()   #Need to implement this function
+			encodersLocked(False)
 		
 		time.sleep(1)  # Prevents the CPU from being overloaded
 
