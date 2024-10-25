@@ -39,18 +39,18 @@ def calibrate_horizontal_track():
 	hMotor = sMotors.horizontalMotors
 
 	hMotor.pulseFactory(direction=True, condition=lambda: not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=96)
-	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=80)
+	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=10)
 	leftSwitch.setLockedOut(False)
 	hMotor.pulseFactory(direction=True, condition=lambda: not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=80)
-	hMotor.pulseFactory(direction=False, iterations=20, motor1=True, motor2=False, initialTargetSpeed=80)
+	hMotor.pulseFactory(direction=False, iterations=20, motor1=True, motor2=False, initialTargetSpeed=10)
 	leftSwitch.setLockedOut(False)
 	hMotor.overwritePosition(0)
 
 	hMotor.pulseFactory(direction=False, condition=lambda: not rightSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=96)
-	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=80)
+	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=10)
 	rightSwitch.setLockedOut(False)
 	hMotor.pulseFactory(direction=False, condition=lambda: not rightSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=80)
-	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=80)
+	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=10)
 	rightSwitch.setLockedOut(False)
 
 	hMotor.setEndPosition(abs(hMotor.getPosition()))
