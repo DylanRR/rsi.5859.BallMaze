@@ -94,7 +94,7 @@ def calibrate_vertical_track():
 		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
 	#chaning from  300 iterations to 3000 iterations to move down the gantry for brian
-	vMotors.pulseFactory(direction=False, iterations=3000, motor1=True, motor2=True, initialTargetSpeed=80)
+	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=80)
 
 	vMotors.setEndPosition(knownStepCount)
 	vMotors.overwritePosition(knownStepCount)
@@ -231,7 +231,6 @@ def IR_RUN_STATE():
 			if thread_e2:
 				thread_e2.join()
 			#sendToHome()   #Need to implement this function
-			print("Break Beam Triggered....")
 			encodersLocked(False)
 		
 		time.sleep(1)  # Prevents the CPU from being overloaded
