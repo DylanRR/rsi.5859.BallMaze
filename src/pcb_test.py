@@ -32,7 +32,7 @@ leds = {
 }
 
 # Button setup using gpiozero
-btn_home = mcp23017_wrapper.MCP_BTN(mcpObj, 4)
+btn_home = mcp23017_wrapper.MCP_BTN(mcpObj, 4) 
 btn_lup = mcp23017_wrapper.MCP_BTN(mcpObj, 5)
 btn_rup = mcp23017_wrapper.MCP_BTN(mcpObj, 6)
 btn_recalibrate = mcp23017_wrapper.MCP_BTN(mcpObj, 7)
