@@ -39,18 +39,18 @@ def calibrate_horizontal_track():
 	hMotor = sMotors.horizontalMotors
 
 	hMotor.pulseFactory(direction=True, condition=lambda: not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=96)
-	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=10)
+	hMotor.pulseFactory(direction=False, iterations=200, motor1=True, motor2=False, initialTargetSpeed=10) #TODO: Magic Number
 	leftSwitch.setLockedOut(False)
 	hMotor.pulseFactory(direction=True, condition=lambda: not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=80)
-	hMotor.pulseFactory(direction=False, iterations=20, motor1=True, motor2=False, initialTargetSpeed=10)
+	hMotor.pulseFactory(direction=False, iterations=100, motor1=True, motor2=False, initialTargetSpeed=10) #TODO: Magic Number
 	leftSwitch.setLockedOut(False)
 	hMotor.overwritePosition(0)
 
 	hMotor.pulseFactory(direction=False, condition=lambda: not rightSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=96)
-	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=10)
+	hMotor.pulseFactory(direction=True, iterations=200, motor1=True, motor2=False, initialTargetSpeed=10) #TODO: Magic Number
 	rightSwitch.setLockedOut(False)
 	hMotor.pulseFactory(direction=False, condition=lambda: not rightSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=80)
-	hMotor.pulseFactory(direction=True, iterations=20, motor1=True, motor2=False, initialTargetSpeed=10)
+	hMotor.pulseFactory(direction=True, iterations=100, motor1=True, motor2=False, initialTargetSpeed=10) #TODO: Magic Number
 	rightSwitch.setLockedOut(False)
 
 	hMotor.setEndPosition(abs(hMotor.getPosition()))
@@ -66,7 +66,7 @@ def calibrate_vertical_track():
 	leftSwitch = sLimitSwitches.L_ls_cali
 	rightSwitch = sLimitSwitches.R_ls_cali
 	vMotors = sMotors.verticalMotors
-	knownStepCount = 5000	#This is the known step count for the vertical track it needs to be manually calibrated
+	knownStepCount = 18496	#TODO: Magic Number - The Full calibrated step count for the vertical motor is 18760 we are backing it off 160 steps
 
 	def leftRightSwitchTrip():
 		return True if leftSwitch.getFirstCalibration() or rightSwitch.getFirstCalibration() else False
@@ -78,7 +78,7 @@ def calibrate_vertical_track():
 	if not rightSwitch.getFirstCalibration():
 		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getFirstCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
-	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)
+	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)  #TODO: Magic Number
 
 	leftSwitch.setLockedOut(False)
 	rightSwitch.setLockedOut(False)
@@ -94,7 +94,7 @@ def calibrate_vertical_track():
 		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
 
 	#chaning from  300 iterations to 3000 iterations to move down the gantry for brian
-	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=80)
+	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=80) #TODO: Magic Number
 
 	vMotors.setEndPosition(knownStepCount)
 	vMotors.overwritePosition(knownStepCount)
@@ -129,6 +129,7 @@ def reSyncMotors():
 		print("Re-Sync Completed successfully ....")
 
 def run_in_thread():
+	print ("Running Horizontal Motor....")
 	hMotor = sMotors.horizontalMotors
 	encoder = sEncoders.encoder2
 	tempDir = sEncoders.encoder2.direction
@@ -151,6 +152,7 @@ def run_in_thread():
 		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)
 
 def run_in_second_thread():
+	print ("Running Virtual Motor....")
 	vMotor = sMotors.verticalMotors
 	encoder = sEncoders.encoder1
 	tempDir = encoder.direction
@@ -233,7 +235,7 @@ def IR_RUN_STATE():
 			#sendToHome()   #Need to implement this function
 			encodersLocked(False)
 		
-		time.sleep(1)  # Prevents the CPU from being overloaded
+		time.sleep(.1)  # Prevents the CPU from being overloaded
 
 	# Ensure threads are properly joined
 	if thread_e1:
@@ -242,12 +244,53 @@ def IR_RUN_STATE():
 		thread_e2.join()
 
 
+def devIsHaulted():
+	return sMotors.motors_halted
+
+def devCalculateVertSteps():
+	print("Calculating Vertical Steps....")
+	vMotors = sMotors.verticalMotors
+	vMotors.overwritePosition(0)
+	print("Current Position Overrided to: ", vMotors.getPosition())
+	print("Moveing motor down till Estop is triggered....")
+	vMotors.pulseFactory(direction=False, condition=lambda: not devIsHaulted(), motor1=True, motor2=True, initialTargetSpeed=20)
+	print("Estop Trigger Detected....")
+	print("Current Vertical Motor Position: ", abs(vMotors.getPosition()))
+	print("Raising Exeption")
+	checkException()
+
+
+def sendToHome():
+	currentHCord = sMotors.horizontalMotors.getPosition()
+	currentVCord = sMotors.verticalMotors.getPosition()
+	hMotorHomeCords = 22745		#TODO: Magic Number
+	vMotorHomeCords = 0				#TODO: Magic Number
+
+	hMotorDirToHome = False if currentHCord > hMotorHomeCords else True
+	vMotorDirToHome = False if currentVCord > vMotorHomeCords else True
+	vMotorStepsToHome = abs(currentVCord - vMotorHomeCords)
+	hMotorStepsToHome = abs(currentHCord - hMotorHomeCords)
+
+	def hHomeMove():
+		sMotors.horizontalMotors.pulseFactory(direction=hMotorDirToHome, iterations=hMotorStepsToHome, motor1=True, motor2=False, initialTargetSpeed=95)
+	def vHomeMove():
+		sMotors.verticalMotors.pulseFactory(direction=vMotorDirToHome, iterations=vMotorStepsToHome, motor1=True, motor2=True, initialTargetSpeed=95)
+
+	hHomeMoveThread = threading.Thread(target=hHomeMove)
+	vHomeMoveThread = threading.Thread(target=vHomeMove)
+	hHomeMoveThread.start()
+	vHomeMoveThread.start()
+	hHomeMoveThread.join()
+	vHomeMoveThread.join()
 
 def devScript():
 	calibrate_horizontal_track()
 	calibrate_vertical_track()
 	input("Press Enter to continue...")  # Pause and wait for user input
+	sendToHome()
+	#devCalculateVertSteps()
 	while True:
+		checkException()
 		IR_RUN_STATE()
 
 def main():
@@ -255,17 +298,15 @@ def main():
 	try:
 		while True:
 			checkException()
-			#if testCal:
-			#	raise mHaltException("Test Calibration Complete")
 			devScript()
-			pass
-			testCal = True
 	
 	except KeyboardInterrupt:
 		print("KeyboardInterrupt Triggered Killing the program...")
 		sMotors.disableAllMotors()
 	except mHaltException as lsObj:
 		print(f"Stoppage Triggered By: {lsObj}")
+		print(f"Vertical Motor Position: {sMotors.verticalMotors.getPosition()}")
+		print(f"Horizontal Motor Position: {sMotors.horizontalMotors.getPosition()}")
 	except Exception as e:
 		sMotors.disableAllMotors()
 		print(e)
