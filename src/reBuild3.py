@@ -71,12 +71,12 @@ def calibrate_vertical_track():
 	def leftRightSwitchTrip():
 		return True if leftSwitch.getFirstCalibration() or rightSwitch.getFirstCalibration() else False
 	
-	vMotors.pulseFactory(direction=True, condition= lambda:not leftRightSwitchTrip(), motor1=True, motor2=True, initialTargetSpeed=90)
+	vMotors.pulseFactory(direction=True, condition= lambda:not leftRightSwitchTrip(), motor1=True, motor2=True, initialTargetSpeed=90) #TODO: Magic Number
 
 	if not leftSwitch.getFirstCalibration():
-		vMotors.pulseFactory(direction=True, condition=lambda:not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not leftSwitch.getFirstCalibration(), motor1=True, motor2=False, initialTargetSpeed=50) #TODO: Magic Number
 	if not rightSwitch.getFirstCalibration():
-		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getFirstCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getFirstCalibration(), motor1=False, motor2=True, initialTargetSpeed=50) #TODO: Magic Number
 
 	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=60)  #TODO: Magic Number
 
@@ -86,12 +86,12 @@ def calibrate_vertical_track():
 	def leftRightSwitchTrip2():
 		return True if leftSwitch.getSecondCalibration() or rightSwitch.getSecondCalibration() else False
 	
-	vMotors.pulseFactory(direction=True, condition=lambda: not leftRightSwitchTrip2(), motor1=True, motor2=True, initialTargetSpeed=90)
+	vMotors.pulseFactory(direction=True, condition=lambda: not leftRightSwitchTrip2(), motor1=True, motor2=True, initialTargetSpeed=90) #TODO: Magic Number
 
 	if not leftSwitch.getSecondCalibration():
-		vMotors.pulseFactory(direction=True, condition=lambda:not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not leftSwitch.getSecondCalibration(), motor1=True, motor2=False, initialTargetSpeed=50) #TODO: Magic Number
 	if not rightSwitch.getSecondCalibration():
-		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50)
+		vMotors.pulseFactory(direction=True, condition=lambda:not rightSwitch.getSecondCalibration(), motor1=False, motor2=True, initialTargetSpeed=50) #TODO: Magic Number
 
 	#chaning from  300 iterations to 3000 iterations to move down the gantry for brian
 	vMotors.pulseFactory(direction=False, iterations=300, motor1=True, motor2=True, initialTargetSpeed=80) #TODO: Magic Number
@@ -120,7 +120,7 @@ def reSyncMotors():
 	vMotors = sMotors.verticalMotors
 	print("Moving Motor Up: ", m1DirToReSync)
 	tempPos = vMotors.getPosition()
-	vMotors.pulseFactory(direction=m1DirToReSync, condition=lambda: not mSync.isFineSynced(), motor1=True, motor2=False, initialTargetSpeed=85)
+	vMotors.pulseFactory(direction=m1DirToReSync, condition=lambda: not mSync.isFineSynced(), motor1=True, motor2=False, initialTargetSpeed=85) #TODO: Magic Number
 	tempPos = abs(tempPos - vMotors.getPosition()) // 2
 	vMotors.overwritePosition(tempPos)
 	if mSync.isDeSynced():
@@ -128,8 +128,36 @@ def reSyncMotors():
 	else:
 		print("Re-Sync Completed successfully ....")
 
+
+def sendToHome():
+	print("Sending Motors to Home....")
+	sMCP.homing_LED.turnOn()
+	currentHCord = sMotors.horizontalMotors.getPosition()
+	currentVCord = sMotors.verticalMotors.getPosition()
+	hMotorHomeCords = 22745		#TODO: Magic Number
+	vMotorHomeCords = 0				#TODO: Magic Number
+
+	hMotorDirToHome = False if currentHCord > hMotorHomeCords else True
+	vMotorDirToHome = False if currentVCord > vMotorHomeCords else True
+	vMotorStepsToHome = abs(currentVCord - vMotorHomeCords)
+	hMotorStepsToHome = abs(currentHCord - hMotorHomeCords)
+
+	def hHomeMove():
+		sMotors.horizontalMotors.pulseFactory(direction=hMotorDirToHome, iterations=hMotorStepsToHome, motor1=True, motor2=False, initialTargetSpeed=95) #TODO: Magic Number
+	def vHomeMove():
+		sMotors.verticalMotors.pulseFactory(direction=vMotorDirToHome, iterations=vMotorStepsToHome, motor1=True, motor2=True, initialTargetSpeed=95) #TODO: Magic Number
+
+	hHomeMoveThread = threading.Thread(target=hHomeMove)
+	vHomeMoveThread = threading.Thread(target=vHomeMove)
+	hHomeMoveThread.start()
+	vHomeMoveThread.start()
+	hHomeMoveThread.join()
+	vHomeMoveThread.join()
+	sMCP.homing_LED.turnOff()
+
 def run_in_thread():
 	print ("Running Horizontal Motor....")
+	sMCP.Encoder2_LED.turnOn()
 	hMotor = sMotors.horizontalMotors
 	encoder = sEncoders.encoder2
 	tempDir = sEncoders.encoder2.direction
@@ -150,9 +178,11 @@ def run_in_thread():
 	
 	if continuePulsing():
 		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)
+	sMCP.Encoder2_LED.turnOff()
 
 def run_in_second_thread():
 	print ("Running Virtual Motor....")
+	sMCP.Encoder1_LED.turnOn()
 	vMotor = sMotors.verticalMotors
 	encoder = sEncoders.encoder1
 	tempDir = encoder.direction
@@ -171,6 +201,7 @@ def run_in_second_thread():
 		return True
 	if continuePulsing():
 		vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
+	sMCP.Encoder1_LED.turnOff()
 
 
 # Main function to manage threads
@@ -225,15 +256,19 @@ def IR_RUN_STATE():
 			encodersLocked(False)
 			print("Exiting Re-Sync....")
 
-		if sMCP.breakBeam_SENS.is_pressed():
+		if not sMCP.breakBeam_SENS.getVal():
 			print("Break Beam Triggered....")
+			sMCP.Ir_LED.turnOff()
+			sMCP.breakBeam_LED.turnOn()
 			encodersLocked(True)
 			if thread_e1:
 				thread_e1.join()
 			if thread_e2:
 				thread_e2.join()
-			#sendToHome()   #Need to implement this function
+			sendToHome()
 			encodersLocked(False)
+			sMCP.breakBeam_LED.turnOff()
+			sMCP.Ir_LED.turnOn()
 		
 		time.sleep(.1)  # Prevents the CPU from being overloaded
 
@@ -244,70 +279,55 @@ def IR_RUN_STATE():
 		thread_e2.join()
 
 
-def devIsHaulted():
-	return sMotors.motors_halted
-
+#Utility function to calculate the vertical steps
 def devCalculateVertSteps():
 	print("Calculating Vertical Steps....")
 	vMotors = sMotors.verticalMotors
 	vMotors.overwritePosition(0)
 	print("Current Position Overrided to: ", vMotors.getPosition())
 	print("Moveing motor down till Estop is triggered....")
-	vMotors.pulseFactory(direction=False, condition=lambda: not devIsHaulted(), motor1=True, motor2=True, initialTargetSpeed=20)
+	def devIsHaulted():
+		return sMotors.motors_halted
+	vMotors.pulseFactory(direction=False, condition=lambda: not devIsHaulted(), motor1=True, motor2=True, initialTargetSpeed=20) #TODO: Magic Number
 	print("Estop Trigger Detected....")
 	print("Current Vertical Motor Position: ", abs(vMotors.getPosition()))
 	print("Raising Exeption")
 	checkException()
 
 
-def sendToHome():
-	currentHCord = sMotors.horizontalMotors.getPosition()
-	currentVCord = sMotors.verticalMotors.getPosition()
-	hMotorHomeCords = 22745		#TODO: Magic Number
-	vMotorHomeCords = 0				#TODO: Magic Number
 
-	hMotorDirToHome = False if currentHCord > hMotorHomeCords else True
-	vMotorDirToHome = False if currentVCord > vMotorHomeCords else True
-	vMotorStepsToHome = abs(currentVCord - vMotorHomeCords)
-	hMotorStepsToHome = abs(currentHCord - hMotorHomeCords)
-
-	def hHomeMove():
-		sMotors.horizontalMotors.pulseFactory(direction=hMotorDirToHome, iterations=hMotorStepsToHome, motor1=True, motor2=False, initialTargetSpeed=95)
-	def vHomeMove():
-		sMotors.verticalMotors.pulseFactory(direction=vMotorDirToHome, iterations=vMotorStepsToHome, motor1=True, motor2=True, initialTargetSpeed=95)
-
-	hHomeMoveThread = threading.Thread(target=hHomeMove)
-	vHomeMoveThread = threading.Thread(target=vHomeMove)
-	hHomeMoveThread.start()
-	vHomeMoveThread.start()
-	hHomeMoveThread.join()
-	vHomeMoveThread.join()
 
 def devScript():
-	calibrate_horizontal_track()
-	calibrate_vertical_track()
-	input("Press Enter to continue...")  # Pause and wait for user input
-	sendToHome()
-	#devCalculateVertSteps()
+	print("Entered Development Script....")
+	sMotors.verticalMotors.pulseFactory(direction=True, iterations=400, motor1=False, motor2=True, initialTargetSpeed=20) #TODO: Magic Number
+	print("Vertical Motor Moved Up....")
+
+def devScript2():
 	while True:
-		checkException()
-		IR_RUN_STATE()
+		if not sMCP.breakBeam_SENS.getVal():
+			print("Break Beam Triggered....")
+		else:
+			print("Break Beam Not Triggered....")
 
 def main():
-	testCal = False
 	try:
+		#devScript()
+		#devScript2()
+		calibrate_horizontal_track()
+		calibrate_vertical_track()
+		sendToHome()
 		while True:
 			checkException()
-			devScript()
+			IR_RUN_STATE()
 	
 	except KeyboardInterrupt:
 		print("KeyboardInterrupt Triggered Killing the program...")
 		sMotors.disableAllMotors()
 	except mHaltException as lsObj:
 		print(f"Stoppage Triggered By: {lsObj}")
-		print(f"Vertical Motor Position: {sMotors.verticalMotors.getPosition()}")
-		print(f"Horizontal Motor Position: {sMotors.horizontalMotors.getPosition()}")
+		sMCP.estop_LED.turnOn()
 	except Exception as e:
+		sMCP.Error_LED.turnOn()
 		sMotors.disableAllMotors()
 		print(e)
 		traceback.print_exc()

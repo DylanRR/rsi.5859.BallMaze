@@ -33,8 +33,7 @@ class MCP_LED:
 class MCP_BTN:
     def __init__(self, mcpObj: MCP23017, channel, debounce_time=0.005):
         self._mcp_pin = mcpObj.get_pin(channel)
-        self._mcp_pin.direction = digitalio.Direction.INPUT
-        self._mcp_pin.pull = digitalio.Pull.UP  # Enable pull-up resistor for input channels
+        self._mcp_pin.switch_to_input(pull=digitalio.Pull.UP)
         self._debounce_time = debounce_time
         self._pressed = False
 
@@ -52,6 +51,9 @@ class MCP_BTN:
                 return state
         return state
 
+    def getVal(self):
+        return self._mcp_pin.value
+    
     def is_pressed(self):
         if self._debounce() == False:  # Assuming active low buttons
             self._pressed = True
