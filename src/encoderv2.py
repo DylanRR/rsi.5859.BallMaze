@@ -6,7 +6,7 @@ from functools import wraps
 def run_in_thread(fn):
   @wraps(fn)
   def wrapper(*args, **kwargs):
-    #print(f"Running function {fn.__name__} in a warpped thread")
+    #print(f"Running function {fn.__name__} in a wrapped thread")
     thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
     thread.start()
     return thread
@@ -87,42 +87,38 @@ class Encoder:
       self.__speedSamples.clear()
 
   def __calcSpeed(self):
-    with self.__threadLock:
-      timeDiff = time.time() - self.__lastChangeTime
-      if timeDiff < self.__timeout:
-        # Calculate a normalized time difference within the operational range
-        normalized_timeDiff = (timeDiff - self.__minSpeedDelta) / (self.__maxSpeedDelta - self.__minSpeedDelta)
-        normalized_timeDiff = max(0, min(normalized_timeDiff, 1))  # Ensure it's between 0 and 1
+    timeDiff = time.time() - self.__lastChangeTime
+    if timeDiff < self.__timeout:
+      # Calculate a normalized time difference within the operational range
+      normalized_timeDiff = (timeDiff - self.__minSpeedDelta) / (self.__maxSpeedDelta - self.__minSpeedDelta)
+      normalized_timeDiff = max(0, min(normalized_timeDiff, 1))  # Ensure it's between 0 and 1
 
-        # Invert the formula to increase speed value as normalized_timeDiff increases
-        tempSpeed = round(1 + (99 * normalized_timeDiff))  # Adjusted formula
-        tempSpeed = max(1, min(tempSpeed, 100))  # Ensure speed is within the expected range
+      # Invert the formula to increase speed value as normalized_timeDiff increases
+      tempSpeed = round(1 + (99 * normalized_timeDiff))  # Adjusted formula
+      tempSpeed = max(1, min(tempSpeed, 100))  # Ensure speed is within the expected range
 
-        self.__speedSamples.append(tempSpeed)
-        if len(self.__speedSamples) > self.__numOfSpeedSamples:
-          avg = sum(self.__speedSamples) / len(self.__speedSamples)
-          avg = round(avg)
-          avg = max(1, min(avg, 100))
-          self.__speed = avg
-          self.__speedSamples.clear()
-      else:
-        self.__speed = 0
+      self.__speedSamples.append(tempSpeed)
+      if len(self.__speedSamples) > self.__numOfSpeedSamples:
+        avg = sum(self.__speedSamples) / len(self.__speedSamples)
+        avg = round(avg)
+        avg = max(1, min(avg, 100))
+        self.__speed = avg
         self.__speedSamples.clear()
-    
+    else:
+      self.__speed = 0
+      self.__speedSamples.clear()
+  
 
   def getDirection(self):
-    with self.__threadLock:
-      return self.direction
+    return self.direction
 
   def getSpeed(self):
-    with self.__threadLock:
-      self.__checkTimeout()
-      return self.__speed
+    self.__checkTimeout()
+    return self.__speed
   
   def isEncoderRunning(self):
-    with self.__threadLock:
-      self.__checkTimeout()
-      return True if self.direction is not None else False
+    self.__checkTimeout()
+    return True if self.direction is not None else False
 
   def getValue(self):
     self.__checkTimeout()
