@@ -160,47 +160,73 @@ def run_in_thread():
 	sMCP.Encoder2_LED.turnOn()
 	hMotor = sMotors.horizontalMotors
 	encoder = sEncoders.encoder2
-	tempDir = sEncoders.encoder2.direction
-	initSpeed = sEncoders.encoder2.getSpeed()
+	tempDir = encoder.direction
+	initSpeed = encoder.getSpeed()
 	tempEndPos = hMotor.getEndPosition()
 
 	def continuePulsing():
 		if not encoder.isEncoderRunning():
+			print("Horizontal Motor Encoder is not running")
 			return False
-		if encoder.direction != tempDir:
+		if encoder.hasDirChanged(tempDir):
+			print("Horizontal Motor Encoder Direction Changed")
 			return False
 		if tempDir:
 			if hMotor.getPosition() >= tempEndPos:
+				print("Horizontal Motor Position End Reached")
 				return False
 		elif hMotor.getPosition() <= 0:
+			print("Horizontal Motor Position End Reached")
 			return False
 		return True
 	
 	if continuePulsing():
-		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)
+		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=80)  #Changing initialTargetSpeed=initSpeed to initialTargetSpeed=80
 	sMCP.Encoder2_LED.turnOff()
+
+def devRunInFirstThread():
+	tempDir = sEncoders.encoder2.direction
+	print (f"Running H Thread,  Dir:  {tempDir}")
+	while not sEncoders.encoder2.hasDirChanged(tempDir):
+		# Motor Running Here
+		time.sleep(0.1)
+	time.sleep (0.1)
+
+def devRunInSecondThread():
+	print ("Running Vertical Thread")
+	tempDir = sEncoders.encoder1.direction
+	print (f"V Thread Dir:  {tempDir}")
+	while not sEncoders.encoder1.hasDirChanged(tempDir):
+		# Motor Running Here
+		time.sleep(0.1)
+	print (f"Breaking V Thread,  new Dir:  {sEncoders.encoder1.direction}")
+	time.sleep (0.1)
 
 def run_in_second_thread():
 	print ("Running Virtual Motor....")
 	sMCP.Encoder1_LED.turnOn()
 	vMotor = sMotors.verticalMotors
 	encoder = sEncoders.encoder1
-	tempDir = encoder.direction
+	tempDir = encoder.getDirection()
 	initSpeed = encoder.getSpeed()
 	tempEndPos = vMotor.getEndPosition()
 	def continuePulsing():
 		if not encoder.isEncoderRunning():
+			print("Vertical Motor Encoder is not running")
 			return False
-		if encoder.direction != tempDir:
+		if encoder.hasDirChanged(tempDir):
+			print("Vertical Motor Encoder Direction Changed")
 			return False
 		if tempDir:
 			if vMotor.getPosition() >= tempEndPos:
+				print("Vertical Motor Position End Reached")
 				return False
 		elif vMotor.getPosition() <= 0:
+				print("Vertical Motor Position End Reached")
 				return False
 		return True
 	if continuePulsing():
-		vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)
+		vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=80)  #Changing initialTargetSpeed=initSpeed to initialTargetSpeed=80
 	sMCP.Encoder1_LED.turnOff()
 
 
@@ -226,13 +252,15 @@ def IR_RUN_STATE():
 			break
 
 		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
-			thread_e1 = threading.Thread(target=run_in_second_thread)
+			thread_e1 = threading.Thread(target=devRunInSecondThread) #Changing target=run_in_second_thread
 			thread_e1.start()
 
 		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
-			thread_e2 = threading.Thread(target=run_in_thread)
+			thread_e2 = threading.Thread(target=devRunInFirstThread)	#Changing target=run_in_thread
 			thread_e2.start()
 
+
+		'''
 		if e1_state and thread_e1.is_alive():
 			vSpeedBuffer.append(vEncode.getSpeed())
 			if time.time() - lastVSpeedUpdate > speedUpdateInterval:
@@ -244,6 +272,7 @@ def IR_RUN_STATE():
 			if time.time() - lastHSPeedUpdate > speedUpdateInterval:
 				hMotor.setTargetSpeed(sum(hSpeedBuffer) // len(hSpeedBuffer))
 				lastHSPeedUpdate = time.time()
+		'''
 
 		if mSync.isDeSynced():
 			print("De-Sync Detected....")
@@ -256,6 +285,7 @@ def IR_RUN_STATE():
 			encodersLocked(False)
 			print("Exiting Re-Sync....")
 
+		'''
 		if not sMCP.breakBeam_SENS.getVal():
 			print("Break Beam Triggered....")
 			sMCP.Ir_LED.turnOff()
@@ -269,8 +299,8 @@ def IR_RUN_STATE():
 			encodersLocked(False)
 			sMCP.breakBeam_LED.turnOff()
 			sMCP.Ir_LED.turnOn()
-		
-		time.sleep(.1)  # Prevents the CPU from being overloaded
+		'''
+		time.sleep(0.1)  # Prevents the CPU from being overloaded
 
 	# Ensure threads are properly joined
 	if thread_e1:
@@ -299,8 +329,37 @@ def devCalculateVertSteps():
 
 def devScript():
 	print("Entered Development Script....")
-	sMotors.verticalMotors.pulseFactory(direction=True, iterations=400, motor1=False, motor2=True, initialTargetSpeed=20) #TODO: Magic Number
-	print("Vertical Motor Moved Up....")
+	def moveThread1():
+		sMotors.verticalMotors.pulseFactory(direction=False, iterations=4000, motor1=True, motor2=True, initialTargetSpeed=5) #TODO: Magic Number
+	
+	def moveThread2():
+		sMotors.horizontalMotors.pulseFactory(direction=False, iterations=4000, motor1=True, motor2=False, initialTargetSpeed=5)
+
+	plock = threading.Lock()
+	def printEncoder1():
+		while True:
+			with plock:
+				print (f"Encoder 1 Dir: {sEncoders.encoder1.direction}")
+			time.sleep(0.1)
+
+	def printEncoder2():
+		while True:
+			with plock:
+				print (f"Encoder 2 Dir: {sEncoders.encoder2.direction}")
+			time.sleep(0.1)
+
+
+	thread1 = threading.Thread(target=moveThread1)
+	thread2 = threading.Thread(target=moveThread2)
+	eThread1 = threading.Thread(target=printEncoder1)
+	eThread2 = threading.Thread(target=printEncoder2)
+	thread1.start()
+	thread2.start()
+	eThread1.start()
+	eThread2.start()
+
+	while True:
+		time.sleep(0.1)
 
 def devScript2():
 	while True:
@@ -311,11 +370,11 @@ def devScript2():
 
 def main():
 	try:
-		#devScript()
+		devScript()
 		#devScript2()
 		calibrate_horizontal_track()
 		calibrate_vertical_track()
-		sendToHome()
+		#sendToHome()
 		while True:
 			checkException()
 			IR_RUN_STATE()

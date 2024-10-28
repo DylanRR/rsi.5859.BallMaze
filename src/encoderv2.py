@@ -21,7 +21,7 @@ class Encoder:
     self.__state = '00'
     self.direction = None
     self.__lastChangeTime = time.time()
-    self.__timeout = 0.4
+    self.__timeout = 1
     self.__speed = 0
     self.__minSpeedDelta = 0.01
     self.__maxSpeedDelta = 0.001
@@ -109,6 +109,10 @@ class Encoder:
         self.__speed = 0
         self.__speedSamples.clear()
     
+
+  def getDirection(self):
+    with self.__threadLock:
+      return self.direction
 
   def getSpeed(self):
     with self.__threadLock:
