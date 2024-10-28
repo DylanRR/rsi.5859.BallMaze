@@ -252,11 +252,11 @@ def IR_RUN_STATE():
 			break
 
 		if e1_state and (thread_e1 is None or not thread_e1.is_alive()):
-			thread_e1 = threading.Thread(target=devRunInSecondThread) #Changing target=run_in_second_thread
+			thread_e1 = threading.Thread(target=run_in_second_thread) #Changing target=run_in_second_thread
 			thread_e1.start()
 
 		if e2_state and (thread_e2 is None or not thread_e2.is_alive()):
-			thread_e2 = threading.Thread(target=devRunInFirstThread)	#Changing target=run_in_thread
+			thread_e2 = threading.Thread(target=run_in_thread)	#Changing target=run_in_thread
 			thread_e2.start()
 
 
@@ -370,7 +370,7 @@ def devScript2():
 
 def main():
 	try:
-		devScript()
+		#devScript()
 		#devScript2()
 		calibrate_horizontal_track()
 		calibrate_vertical_track()
