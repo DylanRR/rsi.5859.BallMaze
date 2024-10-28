@@ -28,11 +28,13 @@ class Encoder:
     self.__speedSamples = []
     self.__numOfSpeedSamples = 100
     self.__threadLock = threading.Lock()
+    self.__state_history = ["00", "00", "00", "00"]
+
     
-    self.leftPin.when_pressed = self.ISR
-    self.rightPin.when_pressed = self.ISR
-    self.leftPin.when_released = self.ISR
-    self.rightPin.when_released = self.ISR
+    self.leftPin.when_pressed = self.ISR2
+    self.rightPin.when_pressed = self.ISR2
+    self.leftPin.when_released = self.ISR2
+    self.rightPin.when_released = self.ISR2
 
   def __del__(self):
     self.close()                                                    
@@ -43,6 +45,24 @@ class Encoder:
 
   def ISR_LOCK(self, bool):
     self.__ISR_LOCK = bool
+
+
+  @run_in_thread
+  def ISR2(self):
+    if self.__ISR_LOCK:
+      return
+    
+    p1 = self.leftPin.value                                               # Get the current left pin value
+    p2 = self.rightPin.value                                              # Get the current right pin value
+    newState = "{}{}".format(int(p1), int(p2))                                   # Create a new state based on the current pin values
+    self.__state_history.pop(0)
+    self.__state_history.append(newState)
+     # Check for consistent patterns in the state history
+    if self.__state_history == ["00", "01", "11", "10"]:
+        self.direction = True  # Clockwise
+    elif self.__state_history == ["00", "10", "11", "01"]:
+        self.direction = False  # Counterclockwise
+    self.__calcSpeed()
 
   @run_in_thread
   def ISR(self):
