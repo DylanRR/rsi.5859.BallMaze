@@ -17,94 +17,102 @@ class Encoder:
     self.__ISR_LOCK = False
     self.leftPin = Button(leftPin, pull_up=True)
     self.rightPin = Button(rightPin, pull_up=True)
-    self.__value = 0
-    self.__state = '00'
-    self.direction = None
+    self.__timeout = 0.25
+    self.__encoderRunning = False
     self.__lastChangeTime = time.time()
-    self.__timeout = 1
-    self.__speed = 0
+
+    self.__oldP1 = 0
+    self.__oldP2 = 0
+    self.counter = 0
+
+    self.leftPin.when_pressed = self.ISR5
+    self.rightPin.when_pressed = self.ISR5
+    self.leftPin.when_released = self.ISR5
+    self.rightPin.when_released = self.ISR5
+
+
+
     self.__minSpeedDelta = 0.01
     self.__maxSpeedDelta = 0.001
     self.__speedSamples = []
     self.__numOfSpeedSamples = 100
-    self.__threadLock = threading.Lock()
-    self.__state_history = ["00", "00", "00", "00"]
-
-    
-    self.leftPin.when_pressed = self.ISR2
-    self.rightPin.when_pressed = self.ISR2
-    self.leftPin.when_released = self.ISR2
-    self.rightPin.when_released = self.ISR2
+    self.__speed = 0
 
   def __del__(self):
     self.close()                                                    
   
-  def close(self):  #TODO: Deal with open threads                                                    
+  def close(self):                                                  
     self.leftPin.close()                                                      # Close the left pin
     self.rightPin.close()                                                     # Close the right pin
 
   def ISR_LOCK(self, bool):
     self.__ISR_LOCK = bool
 
-
   @run_in_thread
-  def ISR2(self):
+  def ISR6(self):
     if self.__ISR_LOCK:
+      return
+    p1 = self.leftPin.value
+    p2 = self.rightPin.value
+    if self.__oldP1 == p1 and self.__oldP2 == p2:
       return
     
-    p1 = self.leftPin.value                                               # Get the current left pin value
-    p2 = self.rightPin.value                                              # Get the current right pin value
-    newState = "{}{}".format(int(p1), int(p2))                                   # Create a new state based on the current pin values
-    self.__state_history.pop(0)
-    self.__state_history.append(newState)
-     # Check for consistent patterns in the state history
-    if self.__state_history == ["00", "01", "11", "10"]:
-        self.direction = True  # Clockwise
-    elif self.__state_history == ["00", "10", "11", "01"]:
-        self.direction = False  # Counterclockwise
-    self.__calcSpeed()
+    if self.__oldP2 != p2:
+      if(self.__oldP1 == 1):
+        if p2 == 0:
+          self.counter -= 1
+        else:
+          self.counter += 1
+    self.__oldP1 = p1
+    self.__oldP2 = p2
+
+    if self.counter > 5:
+      self.counter = 5
+    elif self.counter < -5:
+      self.counter = -5
 
   @run_in_thread
-  def ISR(self):
+  def ISR5(self):
     if self.__ISR_LOCK:
       return
-    p1 = self.leftPin.value                                               # Get the current left pin value
-    p2 = self.rightPin.value                                              # Get the current right pin value
-    newState = "{}{}".format(int(p1), int(p2))                                   # Create a new state based on the current pin values
-    transitions = {                                                              # Dictionary holding possible transition keys and the actions to take on each key
-      "00": { 
-        "01": lambda: setattr(self, "direction", False),                         # Set direction to False on 00 -> 01 transition
-        "10": lambda: setattr(self, "direction", True)},                         # Set direction to True on 00 -> 10 transition
-      "01": {
-        "11": lambda: setattr(self, "direction", False),                         # Set direction to False on 01 -> 11 transition
-        "00": lambda: self.__decrement_value() if self.direction else None},     # Decrement value if direction is True on 01 -> 00
-      "10": {
-        "11": lambda: setattr(self, "direction", True),                          # Set direction to True on 10 -> 11 transition
-        "00": lambda: self.__increment_value() if not self.direction else None}, # Increment value if direction is False on 10 -> 00
-      "11": {
-        "01": lambda: setattr(self, "direction", True),                                             # Set direction to True on 11 -> 01 transition
-        "10": lambda: setattr(self, "direction", False),                                            # Set direction to False on 11 -> 10 transition
-        "00": lambda: self.__increment_value() if not self.direction else self.__decrement_value()} # Increment or decrement based on direction on 11 -> 00
-    }
-    action = transitions.get(self.__state, {}).get(newState, lambda: None)      # Get the action to perform based on the current and new state, default to doing nothing if transition not defined
-    action()                                                                    # Execute the action
-    self.__state = newState                                                     # Update the current state to the new state
+    p1 = self.leftPin.value
+    p2 = self.rightPin.value
+    if self.__oldP1 == p1 and self.__oldP2 == p2:
+      return
+  
+  # Determine direction based on state transition
+    if self.__oldP1 == 0 and self.__oldP2 == 0:
+      if p1 == 1 and p2 == 0:
+        self.counter += 1
+      elif p1 == 0 and p2 == 1:
+        self.counter -= 1
+    elif self.__oldP1 == 1 and self.__oldP2 == 0:
+      if p1 == 1 and p2 == 1:
+        self.counter += 1
+      elif p1 == 0 and p2 == 0:
+        self.counter -= 1
+    elif self.__oldP1 == 1 and self.__oldP2 == 1:
+      if p1 == 0 and p2 == 1:
+        self.counter += 1
+      elif p1 == 1 and p2 == 0:
+        self.counter -= 1
+    elif self.__oldP1 == 0 and self.__oldP2 == 1:
+      if p1 == 0 and p2 == 0:
+        self.counter += 1
+      elif p1 == 1 and p2 == 1:
+        self.counter -= 1
+
+    if self.counter > 5:
+      self.counter = 5
+    elif self.counter < -5:
+      self.counter = -5
+    
+    self.__oldP1 = p1
+    self.__oldP2 = p2
+    
+    self.__lastChangeTime = time.time()
     self.__calcSpeed()
 
-  def __increment_value(self):
-    self.__value += 1
-    self.__lastChangeTime = time.time()
-
-  def __decrement_value(self):
-    self.__value -= 1
-    self.__lastChangeTime = time.time()
-
-  def __checkTimeout(self):
-    if (time.time() - self.__lastChangeTime) > self.__timeout:
-      self.direction = None
-      self.__value = 0
-      self.__speed = 0
-      self.__speedSamples.clear()
 
   def __calcSpeed(self):
     timeDiff = time.time() - self.__lastChangeTime
@@ -127,22 +135,26 @@ class Encoder:
     else:
       self.__speed = 0
       self.__speedSamples.clear()
+
+  def __checkTimeout(self):
+    if (time.time() - self.__lastChangeTime) > self.__timeout:
+      self.__encoderRunning = False
+      self.counter = 0
+      self.__speed = 0
+    else:
+      self.__encoderRunning = True
   
-
-  def getDirection(self):
-    return self.direction
-
   def getSpeed(self):
     self.__checkTimeout()
     return self.__speed
-  
+
+  def getDirection(self):
+    self.__checkTimeout()
+    return True if self.counter > 0 else False
+
   def isEncoderRunning(self):
     self.__checkTimeout()
-    return True if self.direction is not None else False
-
-  def getValue(self):
-    self.__checkTimeout()
-    return self.__value
+    return self.__encoderRunning
   
   def hasDirChanged(self, dirValue) -> bool:
-    return False if dirValue == self.direction else True
+    return False if dirValue == self.getDirection() else True

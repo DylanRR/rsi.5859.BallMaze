@@ -20,7 +20,8 @@ def cleanup():
 def main():
   try:
     while True:
-      print (f"Encoder 1 Dir: {encoder1.direction} Encoder 2 Dir: {encoder2.direction}")
+      #print(f"Encoder 1 running: {encoder1.isEncoderRunning()} Encoder 2 running: {encoder2.isEncoderRunning()}")
+      print (f"Encoder 1 Dir: {encoder1.getDirection()} Encoder 2 Dir: {encoder2.getDirection()}")
       time.sleep(0.1)
   except KeyboardInterrupt:
     print("Exiting...")

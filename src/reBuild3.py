@@ -160,7 +160,7 @@ def run_in_thread():
 	sMCP.Encoder2_LED.turnOn()
 	hMotor = sMotors.horizontalMotors
 	encoder = sEncoders.encoder2
-	tempDir = encoder.direction
+	tempDir = encoder.getDirection()
 	initSpeed = encoder.getSpeed()
 	tempEndPos = hMotor.getEndPosition()
 
@@ -181,26 +181,8 @@ def run_in_thread():
 		return True
 	
 	if continuePulsing():
-		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=80)  #Changing initialTargetSpeed=initSpeed to initialTargetSpeed=80
+		hMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=False, initialTargetSpeed=initSpeed)  #Changing initialTargetSpeed=initSpeed to initialTargetSpeed=80
 	sMCP.Encoder2_LED.turnOff()
-
-def devRunInFirstThread():
-	tempDir = sEncoders.encoder2.direction
-	print (f"Running H Thread,  Dir:  {tempDir}")
-	while not sEncoders.encoder2.hasDirChanged(tempDir):
-		# Motor Running Here
-		time.sleep(0.1)
-	time.sleep (0.1)
-
-def devRunInSecondThread():
-	print ("Running Vertical Thread")
-	tempDir = sEncoders.encoder1.direction
-	print (f"V Thread Dir:  {tempDir}")
-	while not sEncoders.encoder1.hasDirChanged(tempDir):
-		# Motor Running Here
-		time.sleep(0.1)
-	print (f"Breaking V Thread,  new Dir:  {sEncoders.encoder1.direction}")
-	time.sleep (0.1)
 
 def run_in_second_thread():
 	print ("Running Virtual Motor....")
@@ -226,7 +208,7 @@ def run_in_second_thread():
 				return False
 		return True
 	if continuePulsing():
-		vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=80)  #Changing initialTargetSpeed=initSpeed to initialTargetSpeed=80
+		vMotor.pulseFactory(direction=tempDir, condition= lambda: continuePulsing(), motor1=True, motor2=True, initialTargetSpeed=initSpeed)  #Changing initialTargetSpeed=initSpeed to initialTargetSpeed=80
 	sMCP.Encoder1_LED.turnOff()
 
 
@@ -260,7 +242,7 @@ def IR_RUN_STATE():
 			thread_e2.start()
 
 
-		'''
+		
 		if e1_state and thread_e1.is_alive():
 			vSpeedBuffer.append(vEncode.getSpeed())
 			if time.time() - lastVSpeedUpdate > speedUpdateInterval:
@@ -272,7 +254,7 @@ def IR_RUN_STATE():
 			if time.time() - lastHSPeedUpdate > speedUpdateInterval:
 				hMotor.setTargetSpeed(sum(hSpeedBuffer) // len(hSpeedBuffer))
 				lastHSPeedUpdate = time.time()
-		'''
+		
 
 		if mSync.isDeSynced():
 			print("De-Sync Detected....")

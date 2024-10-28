@@ -233,7 +233,7 @@ class Encoder:
   
   def isEncoderRunning(self):
     self.__checkTimeout()
-    return True if self.counter != 0 else False
+    return True if self.counter == 0 else False
     #return True if self.direction is not None else False
 
   def getValue(self):
@@ -241,4 +241,4 @@ class Encoder:
     return self.__value
   
   def hasDirChanged(self, dirValue) -> bool:
-    return False if dirValue == self.direction else True
+    return False if dirValue == self.getDirection() else True
